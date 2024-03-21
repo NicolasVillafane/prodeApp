@@ -18,6 +18,14 @@ const prodePool = new Pool({
   database: 'prodeapp',
 });
 
+const userPool = new Pool({
+  host: 'localhost',
+  user: 'postgres',
+  port: 5432,
+  password: 'postgres',
+  database: 'prodeapp',
+});
+
 export const getTournaments = async () => {
   try {
     return await new Promise(function (resolve, reject) {
@@ -151,6 +159,46 @@ export const getProde = async (id) => {
   }
 };
 
+export const saveUserToDatabase = (userId, username, email) => {
+  console.log('hello');
+  userPool.query(
+    'INSERT INTO users (id, username, email) VALUES ($1, $2, $3)',
+    [userId, username, email],
+    (error, results) => {
+      if (error) {
+        console.error('Error saving user to database:', error);
+      } else {
+        console.log('User saved to database:', results.rows[0]);
+      }
+    }
+  );
+};
+
+export const getUserById = (userId) => {
+  return new Promise((resolve, reject) => {
+    // Execute the query to fetch the user by ID
+    userPool.query(
+      'SELECT * FROM users WHERE id = $1',
+      [userId],
+      (error, result) => {
+        if (error) {
+          // If there's an error, reject the promise with the error object
+          reject(error);
+        } else {
+          // Check if the query returned any rows
+          if (result.rows.length > 0) {
+            // Resolve the promise with the first row (assuming user ID is unique)
+            resolve(result.rows[0]);
+          } else {
+            // If no rows were returned, the user doesn't exist, so resolve with null
+            resolve(null);
+          }
+        }
+      }
+    );
+  });
+};
+
 export default {
   createTournament,
   getTournament,
@@ -158,4 +206,6 @@ export default {
   createProde,
   getProdes,
   getProde,
+  saveUserToDatabase,
+  getUserById,
 };

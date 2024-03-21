@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import keycloak from './Keycloak';
+import { useState, useEffect } from 'react';
+import keycloak from './Keycloak'; // Import the keycloak instance
 import {
   AppBar,
   Button,
@@ -12,6 +12,46 @@ import {
   Typography,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+
+// Function to send a POST request to /keycloak-events
+const sendEventToBackend = async () => {
+  // Extract user data from Keycloak object
+  const userId = keycloak.tokenParsed?.sub;
+  const username = keycloak.tokenParsed?.preferred_username;
+  const email = keycloak.tokenParsed?.email;
+
+  console.log('User ID:', userId);
+  console.log('Username:', username);
+  console.log('Email:', email);
+
+  try {
+    const response = await fetch('/keycloak-events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'CREATE', // Specify the type of event
+        data: {
+          type: 'USER',
+          details: {
+            userId: userId,
+            username: username,
+            email: email,
+            // Add any other relevant data
+          },
+        },
+      }),
+    });
+    if (response.ok) {
+      console.log('Keycloak event sent successfully');
+    } else {
+      console.error('Failed to send Keycloak event');
+    }
+  } catch (error) {
+    console.error('Error sending Keycloak event:', error);
+  }
+};
 
 function Appbar() {
   const [openDrawer, setOpenDrawer] = useState(false);
@@ -28,6 +68,15 @@ function Appbar() {
     // Redirect to Keycloak's registration page
     keycloak.register();
   };
+
+  // UseEffect hook to trigger the event after successful authentication
+  useEffect(() => {
+    // Check if the user is authenticated
+    if (keycloak.authenticated) {
+      // Call the function to send the event to the backend
+      sendEventToBackend();
+    }
+  }, [keycloak.authenticated]);
 
   return (
     <AppBar

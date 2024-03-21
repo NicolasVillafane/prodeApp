@@ -6,10 +6,11 @@ import FootballDataApi from './FootballDataApi.cjs';
 import {
   getTournaments,
   createTournament,
-  // getTournament,
   getProdes,
   createProde,
   getProde,
+  saveUserToDatabase,
+  getUserById,
 } from './database.js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -166,6 +167,38 @@ app.get('/create-prode', (req, res) => {
     .catch((error) => {
       res.status(500).send(error);
     });
+});
+
+app.post('/keycloak-events', (req, res) => {
+  const eventType = req.body['type']; // Type of event
+  const eventData = req.body['data']; // Event data, including user information
+
+  // Check if the event is a user creation event
+  if (eventType === 'CREATE' && eventData['type'] === 'USER') {
+    // Extract user information from eventData
+    const { userId, username, email } = eventData['details'];
+
+    // Check if the user already exists in the database
+    // Assuming you have a function `getUserById` to check if the user exists
+    getUserById(userId)
+      .then((existingUser) => {
+        if (existingUser) {
+          console.log('User already exists in the database:', existingUser);
+          // You can choose to ignore the event or update existing user information here
+          res.status(200).send('User already exists in the database.');
+        } else {
+          // Save user information to PostgreSQL database
+          saveUserToDatabase(userId, username, email);
+          res.status(200).send('User created event received and processed.');
+        }
+      })
+      .catch((error) => {
+        console.error('Error checking user existence:', error);
+        res.status(500).send('Internal server error.');
+      });
+  } else {
+    res.status(400).send('Unsupported event type or data.');
+  }
 });
 
 app.post('/admin', (req, res) => {
