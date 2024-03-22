@@ -11,6 +11,7 @@ import {
   getProde,
   saveUserToDatabase,
   getUserById,
+  deleteProde,
 } from './database.js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -186,6 +187,18 @@ app.post('/create-prode', (req, res) => {
     .catch((error) => {
       res.status(500).send(error);
     });
+});
+
+app.delete('/p/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Call the function to delete the prode from the database
+    await deleteProde(id);
+    res.status(200).json({ message: 'Prode deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting prode:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.use('*', (req, res) => {

@@ -1,11 +1,42 @@
-import Appbar from './Appbar';
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Typography, Grid, Container, Checkbox } from '@mui/material';
+import Appbar from './Appbar';
+
+interface Match {
+  id: string;
+  utcDate: string;
+  status: string;
+  homeTeam: {
+    name: string;
+  };
+  awayTeam: {
+    name: string;
+  };
+  score: {
+    fullTime: {
+      homeTeam: number;
+      awayTeam: number;
+    };
+  };
+}
+
+interface Prode {
+  id: string;
+  name: string;
+  author_name: string;
+}
+
+interface Data {
+  prode: Prode[];
+  football?: Match[];
+  currentMatchday?: number;
+}
 
 const ShowProde = () => {
-  let { id } = useParams();
-  const [data, setData] = useState<any>({ prode: [] });
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [data, setData] = useState<Data>({ prode: [] });
   const [selectedWinner, setSelectedWinner] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,16 +51,27 @@ const ShowProde = () => {
     };
 
     fetchData();
-  }, []);
+  }, [id]);
 
   const handleCheckboxChange = (team: string) => {
-    // Handle checkbox change
-    console.log('Selected winner for this match:', team);
     setSelectedWinner(team);
   };
 
+  const handleDeleteProde = async () => {
+    try {
+      await fetch(`/p/${id}`, {
+        method: 'DELETE',
+      });
+      navigate('/'); // Redirect to dashboard after deletion
+    } catch (error) {
+      console.error('Error deleting prode:', error);
+    }
+  };
+
+  const isAuthor = true; // Replace with your logic to determine if the user is the author
+
   const matches = data.football
-    ? data.football.map((match: any) => {
+    ? data.football.map((match) => {
         const dateObject = new Date(match.utcDate);
 
         const day = dateObject.getDate();
@@ -89,17 +131,6 @@ const ShowProde = () => {
       })
     : [];
 
-  if (!data.prode || data.prode.length === 0) {
-    return (
-      <div>
-        <Appbar />
-        <Container>
-          <Typography variant="h4">Loading...</Typography>
-        </Container>
-      </div>
-    );
-  }
-
   return (
     <div>
       <Appbar />
@@ -115,14 +146,14 @@ const ShowProde = () => {
             <Grid item xs={3}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <Typography variant="h2" color="#9A2A2A">
-                  {data.prode[0].name}
+                  {data.prode[0]?.name}
                 </Typography>
                 <Typography
                   variant="subtitle1"
                   color="#9A2A2A"
                   style={{ marginLeft: '8px' }}
                 >
-                  by {data.prode[0].author_name}
+                  by {data.prode[0]?.author_name}
                 </Typography>
               </div>
             </Grid>
@@ -155,6 +186,15 @@ const ShowProde = () => {
             )}
           </Grid>
         </Grid>
+        {data.prode.length > 0 && (
+          <Grid container spacing={2}>
+            <Grid item>
+              {isAuthor && (
+                <button onClick={handleDeleteProde}>Delete Prode</button>
+              )}
+            </Grid>
+          </Grid>
+        )}
       </Container>
     </div>
   );

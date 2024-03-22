@@ -166,6 +166,21 @@ export const getProde = async (id) => {
   }
 };
 
+export const deleteProde = (id) => {
+  return new Promise(function (resolve, reject) {
+    prodePool.query(
+      'DELETE FROM prodes WHERE id = $1',
+      [id],
+      (error, results) => {
+        if (error) {
+          reject(error);
+        }
+        resolve();
+      }
+    );
+  });
+};
+
 export const saveUserToDatabase = (userId, username, email) => {
   console.log('hello');
   userPool.query(
@@ -215,4 +230,5 @@ export default {
   getProde,
   saveUserToDatabase,
   getUserById,
+  deleteProde,
 };
