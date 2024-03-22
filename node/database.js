@@ -96,10 +96,17 @@ export const createTournament = (body) => {
 export const createProde = (body) => {
   return new Promise(function (resolve, reject) {
     const id = uuid();
-    const { name, tournamentName, tournamentId } = body;
+    const {
+      name,
+      tournamentName,
+      tournamentId,
+      isPublic,
+      authorId,
+      authorName,
+    } = body;
     prodePool.query(
-      'INSERT INTO prodes (id, name, tournamentName, tournamentId) VALUES ($1, $2, $3, $4) RETURNING *',
-      [id, name, tournamentName, tournamentId],
+      'INSERT INTO prodes (id, name, tournamentName, tournamentId, isPublic, author_id, author_name) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [id, name, tournamentName, tournamentId, isPublic, authorId, authorName],
       (error, results) => {
         if (error) {
           reject(error);

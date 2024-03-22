@@ -40,75 +40,42 @@ app.get('/home', (req, res) => {
 app.get('/p/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    let prodeData = {};
+    let prodeData = await getProde(id);
     let footballData = {};
 
-    // Get Prode data
-    await getProde(id)
-      .then((response) => {
-        prodeData = response;
-      })
-      .catch((error) => {
-        console.error('Prode Error:', JSON.stringify(error, null, 4));
-      });
-
-    // Get Football Data API
     const fd = new FootballDataApi(footballDataApiKey);
 
-    // Get the competition information to retrieve the current matchday
     const competitionInfo = await fd.getCompetition(
       parseInt(prodeData[0].tournamentid)
     );
     let currentMatchday = competitionInfo.currentSeason.currentMatchday;
 
-    // Retrieve matches for the current matchday
-    await fd
-      .getCompetitionMatchesMatchday(
-        parseInt(prodeData[0].tournamentid),
-        currentMatchday
-      )
-      .then((response) => {
-        footballData = response.matches;
-      })
-      .catch((error) => {
-        console.error('Football Data Error:', JSON.stringify(error, null, 4));
-      });
+    footballData = await fd.getCompetitionMatchesMatchday(
+      parseInt(prodeData[0].tournamentid),
+      currentMatchday
+    );
 
-    // Check if all matches are finished
-    let allMatchesFinished = true;
-    for (const match of footballData) {
-      if (match.status !== 'FINISHED') {
-        allMatchesFinished = false;
-        break;
-      }
-    }
+    let allMatchesFinished = footballData.matches.every(
+      (match) => match.status === 'FINISHED'
+    );
 
-    // If all matches are finished, increment currentMatchday and fetch matches for the next matchday
     if (allMatchesFinished) {
       currentMatchday++;
-
-      await fd
-        .getCompetitionMatchesMatchday(
-          parseInt(prodeData[0].tournamentid),
-          currentMatchday
-        )
-        .then((response) => {
-          footballData = response.matches;
-        })
-        .catch((error) => {
-          console.error('Football Data Error:', JSON.stringify(error, null, 4));
-        });
+      footballData = await fd.getCompetitionMatchesMatchday(
+        parseInt(prodeData[0].tournamentid),
+        currentMatchday
+      );
     }
 
-    // Combine data and send response
     const responseData = {
       prode: prodeData,
-      football: footballData,
+      football: footballData.matches,
       currentMatchday: currentMatchday,
     };
 
     res.status(200).json(responseData);
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).send(error);
   }
 });

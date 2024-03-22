@@ -112,9 +112,20 @@ const ShowProde = () => {
           justifyContent="center"
         >
           <Grid item xs={3}>
-            <Typography variant="h2" color="#9A2A2A">
-              {data.prode[0].name}
-            </Typography>
+            <Grid item xs={3}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="h2" color="#9A2A2A">
+                  {data.prode[0].name}
+                </Typography>
+                <Typography
+                  variant="subtitle1"
+                  color="#9A2A2A"
+                  style={{ marginLeft: '8px' }}
+                >
+                  by {data.prode[0].author_name}
+                </Typography>
+              </div>
+            </Grid>
           </Grid>
         </Grid>
         <Grid

@@ -1,8 +1,10 @@
-import Appbar from './Appbar';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useNavigate } from 'react-router-dom';
+import keycloak from './Keycloak'; // Import the Keycloak instance
+import Appbar from './Appbar';
+
 import {
   Card,
   CardContent,
@@ -15,7 +17,15 @@ import {
   InputLabel,
   FormControl,
   Container,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
+
+// Define the type for tournament data
+interface Tournament {
+  id: number;
+  name: string;
+}
 
 const validationSchema = yup.object({
   name: yup
@@ -33,16 +43,12 @@ const validationSchema = yup.object({
     )
     .required('Tournament is required'),
 });
-interface Tournament {
-  id: number; // Change the type according to the type of id in your data
-  name: string;
-}
 
 const CreateProde = () => {
   const [name, setName] = useState('');
   const [tournament, setTournament] = useState('');
-  const [data, setData] = useState<Tournament[]>([]);
-
+  const [data, setData] = useState<Tournament[]>([]); // Specify the type as Tournament array
+  const [isPublic, setIsPublic] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,7 +67,6 @@ const CreateProde = () => {
 
   const handleSubmit = async () => {
     try {
-      // Find the selected tournament object
       const selectedTournament = data.find(
         (tournament) => tournament.name === formik.values.tournament
       );
@@ -71,24 +76,26 @@ const CreateProde = () => {
         return;
       }
 
-      // Send the POST request with the id and name
-      let response = await fetch('/create-prode', {
+      const user = keycloak.authenticated ? keycloak.tokenParsed : null; // Get authenticated user info
+
+      const response = await fetch('/create-prode', {
         method: 'post',
         body: JSON.stringify({
           name: formik.values.name,
-          tournamentId: selectedTournament.id, // Include the id of the selected tournament
-          tournamentName: formik.values.tournament, // Include the name of the selected tournament
+          tournamentId: selectedTournament?.id,
+          tournamentName: formik.values.tournament,
+          isPublic: isPublic,
+          authorId: user?.sub, // Pass the user ID if authenticated, null otherwise
+          authorName: user?.preferred_username, // Pass the username if authenticated, null otherwise
         }),
         headers: { 'content-type': 'application/json' },
       });
       await response.json();
       console.log(response);
 
-      // Redirect to the "/" route after successful submission
       navigate('/'); // Redirect to the "/" route
     } catch (error) {
       console.log(error);
-      return null;
     }
   };
 
@@ -118,7 +125,7 @@ const CreateProde = () => {
                     fullWidth
                     value={name}
                     variant="outlined"
-                    label="name"
+                    label="Name"
                     onChange={(e) => {
                       setName(e.target.value);
                     }}
@@ -151,6 +158,19 @@ const CreateProde = () => {
                       ))}
                     </Select>
                   </FormControl>
+                </Grid>
+
+                {/* Checkbox or Switch to set prode as public or private */}
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={isPublic}
+                        onChange={(e) => setIsPublic(e.target.checked)}
+                      />
+                    }
+                    label="Make Prode Public"
+                  />
                 </Grid>
 
                 <Grid xs={12} item>
