@@ -221,6 +221,22 @@ export const getUserById = (userId) => {
   });
 };
 
+export const joinProde = async (prodeId, userId, username) => {
+  try {
+    // Update the prode table to include the joined user
+    await prodePool.query(
+      'UPDATE prodes SET joined_users_info = joined_users_info || $1 WHERE id = $2',
+      [{ id: userId, username: username }, prodeId]
+    );
+
+    // Return success message
+    return { success: true };
+  } catch (error) {
+    // Return error if any
+    throw error;
+  }
+};
+
 export default {
   createTournament,
   getTournament,
@@ -231,4 +247,5 @@ export default {
   saveUserToDatabase,
   getUserById,
   deleteProde,
+  joinProde,
 };

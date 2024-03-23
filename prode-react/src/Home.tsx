@@ -4,17 +4,24 @@ import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
-  CardActions,
   CardMedia,
-  Button,
   Typography,
   Grid,
-  Container, // Import Grid component from MUI
+  Container,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
+
+interface Prode {
+  id: string;
+  name: string;
+  tournamentname: string;
+  ispublic: boolean;
+  author_name: string;
+}
 
 function Home() {
   const { keycloak } = useKeycloak();
-  const [data, setData] = useState([{}]);
+  const [data, setData] = useState<Prode[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,32 +37,39 @@ function Home() {
     fetchData();
   }, []);
 
-  console.log(data);
-
-  const prodes = data.map((prode: any) => (
+  const prodes = data.map((prode) => (
     <Grid item xs={12} sm={6} md={4} lg={3} key={prode.id}>
-      {' '}
-      {/* Define the grid layout */}
-      <Card sx={{ maxWidth: 345, mb: 1.5 }}>
-        <CardMedia
-          sx={{ height: 140 }}
-          image="https://img.freepik.com/foto-gratis/herramientas-deportivas_53876-138077.jpg"
-          title="football"
-        />
-        <CardContent>
-          <Typography gutterBottom variant="h6" component="div">
-            {prode.name} | {prode.tournamentname}
-          </Typography>
-          <Typography gutterBottom variant="subtitle1" component="div">
-            by {prode.author_name}
-          </Typography>
-        </CardContent>
-        <CardActions>
-          <Button size="small" href={`/p/${prode.id}`}>
-            Info
-          </Button>
-        </CardActions>
-      </Card>
+      <Link to={`/p/${prode.id}`} style={{ textDecoration: 'none' }}>
+        <Card
+          sx={{
+            maxWidth: 345,
+            marginBottom: 3,
+            transition: 'box-shadow 0.3s ease',
+            '&:hover': {
+              boxShadow: '0 8px 20px 0 rgba(0,0,0,0.3)',
+            },
+          }}
+        >
+          <CardMedia
+            sx={{ height: 140 }}
+            image="https://img.freepik.com/foto-gratis/herramientas-deportivas_53876-138077.jpg"
+            title="Football"
+          />
+          <CardContent>
+            <Typography gutterBottom variant="h6" component="div">
+              {prode.name} | {prode.tournamentname}{' '}
+              {prode.ispublic ? '- Public' : '- Private'}{' '}
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              color="textSecondary"
+              component="div"
+            >
+              by {prode.author_name}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Link>
     </Grid>
   ));
 
@@ -63,12 +77,13 @@ function Home() {
     <div>
       <Appbar />
       <Container>
-        <h1>Welcome {keycloak.tokenParsed?.preferred_username}</h1>
-
-        <h2>Prodes:</h2>
-        <Grid container spacing={2}>
-          {' '}
-          {/* Grid container */}
+        <Typography variant="h3" gutterBottom>
+          Welcome {keycloak.tokenParsed?.preferred_username}
+        </Typography>
+        <Typography variant="h4" gutterBottom>
+          Prodes:
+        </Typography>
+        <Grid container spacing={3}>
           {prodes}
         </Grid>
       </Container>

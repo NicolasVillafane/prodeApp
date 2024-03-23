@@ -12,6 +12,7 @@ import {
   saveUserToDatabase,
   getUserById,
   deleteProde,
+  joinProde,
 } from './database.js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -191,6 +192,34 @@ app.post('/create-prode', (req, res) => {
     .catch((error) => {
       res.status(500).send(error);
     });
+});
+
+app.post('/p/:id/join', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, username } = req.body;
+
+    // Check if the prode exists
+    const prodeData = await getProde(id);
+    if (!prodeData || prodeData.length === 0) {
+      return res.status(404).json({ error: 'Prode not found' });
+    }
+
+    const prode = prodeData[0];
+
+    // Check if the prode is public
+    if (!prode.ispublic) {
+      return res.status(403).json({ error: 'Prode is not public' });
+    }
+
+    // Join the prode using database function
+    await joinProde(id, userId, username);
+
+    res.status(200).json({ message: 'User joined the prode successfully' });
+  } catch (error) {
+    console.error('Error joining prode:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.delete('/p/:id', async (req, res) => {

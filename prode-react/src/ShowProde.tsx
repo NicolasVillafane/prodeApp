@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Typography, Grid, Container, Checkbox, Button } from '@mui/material';
+import {
+  Typography,
+  Grid,
+  Container,
+  Checkbox,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+} from '@mui/material';
 import Appbar from './Appbar';
 import keycloak from './Keycloak';
 
@@ -27,6 +36,8 @@ interface Prode {
   name: string;
   author_name: string;
   author_id: string;
+  ispublic: boolean;
+  joined_users_info: { id: string; username: string }[];
 }
 
 interface Data {
@@ -41,6 +52,7 @@ const ShowProde = () => {
   const [data, setData] = useState<Data>({ prode: [] });
   const [selectedWinner, setSelectedWinner] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [joinedUsers, setJoinedUsers] = useState<JSX.Element[]>([]);
 
   useEffect(() => {
     const userId = keycloak.subject || null;
@@ -53,6 +65,14 @@ const ShowProde = () => {
         const response = await fetch(`/p/${id}?userId=${userId}`);
         const result = await response.json();
         setData(result);
+        if (result.prode.length > 0) {
+          const users = result.prode[0].joined_users_info.map((user: any) => (
+            <Typography key={user.id} variant="body1">
+              {user.username}
+            </Typography>
+          ));
+          setJoinedUsers(users);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -73,6 +93,30 @@ const ShowProde = () => {
       navigate('/');
     } catch (error) {
       console.error('Error deleting prode:', error);
+    }
+  };
+
+  const handleJoinProde = async () => {
+    try {
+      const userId = keycloak.tokenParsed?.sub;
+      const username = keycloak.tokenParsed?.preferred_username;
+
+      if (!userId || !username) {
+        console.error('User ID or username not available.');
+        return;
+      }
+
+      await fetch(`/p/${id}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, username }),
+      });
+
+      // Rest of your code...
+    } catch (error) {
+      console.error('Error joining prode:', error);
     }
   };
 
@@ -186,10 +230,40 @@ const ShowProde = () => {
               <Typography variant="h5">No Matches!</Typography>
             )}
           </Grid>
+          <Grid item xs={6} textAlign="left">
+            {joinedUsers.length > 0 ? (
+              <List component="ol">
+                {joinedUsers.map((user, index) => (
+                  <ListItem key={index}>
+                    <ListItemText>
+                      <Typography variant="h6">
+                        {`${index + 1}. ${user.props.children}`}
+                      </Typography>
+                    </ListItemText>
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body1">No users have joined yet!</Typography>
+            )}
+          </Grid>
         </Grid>
-        {data.prode.length > 0 && (
+        {data.prode.length > 0 && userId && (
           <Grid container spacing={2} justifyContent="flex-end">
             <Grid item>
+              {!data.prode[0]?.joined_users_info.find(
+                (user) => user.id === userId
+              ) &&
+                data.prode[0]?.author_id !== userId &&
+                data.prode[0]?.ispublic && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleJoinProde}
+                  >
+                    Join Prode
+                  </Button>
+                )}
               {data.prode[0]?.author_id === userId && (
                 <Button
                   variant="contained"
