@@ -41,7 +41,10 @@ app.get('/home', (req, res) => {
 app.get('/p/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.query.userId;
     let prodeData = await getProde(id);
+    const isAuthor = prodeData[0].author_id === userId;
+
     let footballData = {};
 
     const fd = new FootballDataApi(footballDataApiKey);
@@ -72,6 +75,7 @@ app.get('/p/:id', async (req, res) => {
       prode: prodeData,
       football: footballData.matches,
       currentMatchday: currentMatchday,
+      isAuthor: isAuthor, // Adding isAuthor to the response data
     };
 
     res.status(200).json(responseData);

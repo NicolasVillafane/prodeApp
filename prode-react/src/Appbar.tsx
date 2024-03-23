@@ -102,7 +102,7 @@ function Appbar() {
           <span
             style={{ fontSize: '0.75rem', marginLeft: '5px', opacity: 0.7 }}
           >
-            by Nico™
+            by NicoProductions™
           </span>
         </Typography>
         <Drawer anchor="left" open={openDrawer} onClose={toggleDrawer}>

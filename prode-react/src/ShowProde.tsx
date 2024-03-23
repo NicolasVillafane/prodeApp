@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Typography, Grid, Container, Checkbox } from '@mui/material';
+import { Typography, Grid, Container, Checkbox, Button } from '@mui/material';
 import Appbar from './Appbar';
+import keycloak from './Keycloak';
 
 interface Match {
   id: string;
@@ -25,6 +26,7 @@ interface Prode {
   id: string;
   name: string;
   author_name: string;
+  author_id: string;
 }
 
 interface Data {
@@ -38,11 +40,17 @@ const ShowProde = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<Data>({ prode: [] });
   const [selectedWinner, setSelectedWinner] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userId = keycloak.subject || null;
+    setUserId(userId);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`/p/${id}`);
+        const response = await fetch(`/p/${id}?userId=${userId}`);
         const result = await response.json();
         setData(result);
       } catch (error) {
@@ -51,7 +59,7 @@ const ShowProde = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, userId]);
 
   const handleCheckboxChange = (team: string) => {
     setSelectedWinner(team);
@@ -62,32 +70,25 @@ const ShowProde = () => {
       await fetch(`/p/${id}`, {
         method: 'DELETE',
       });
-      navigate('/'); // Redirect to dashboard after deletion
+      navigate('/');
     } catch (error) {
       console.error('Error deleting prode:', error);
     }
   };
 
-  const isAuthor = true; // Replace with your logic to determine if the user is the author
-
   const matches = data.football
     ? data.football.map((match) => {
         const dateObject = new Date(match.utcDate);
-
         const day = dateObject.getDate();
         const formattedDay = day < 10 ? `0${day}` : day;
-
         const month = dateObject.getMonth() + 1;
         const formattedMonth = month < 10 ? `0${month}` : month;
-
         const formattedDate = `${formattedDay}/${formattedMonth}`;
-
         const matchStartDate = dateObject.getTime();
         const currentDateTime = new Date().getTime();
         const isMatchLocked =
           match.status !== 'POSTPONED' &&
-          currentDateTime >= matchStartDate - 30 * 60 * 1000; // 30 minutes before match start
-
+          currentDateTime >= matchStartDate - 30 * 60 * 1000;
         const formattedHour = dateObject.getUTCHours();
         const formattedMinutes = dateObject.getUTCMinutes();
 
@@ -187,10 +188,16 @@ const ShowProde = () => {
           </Grid>
         </Grid>
         {data.prode.length > 0 && (
-          <Grid container spacing={2}>
+          <Grid container spacing={2} justifyContent="flex-end">
             <Grid item>
-              {isAuthor && (
-                <button onClick={handleDeleteProde}>Delete Prode</button>
+              {data.prode[0]?.author_id === userId && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleDeleteProde}
+                >
+                  Delete Prode
+                </Button>
               )}
             </Grid>
           </Grid>

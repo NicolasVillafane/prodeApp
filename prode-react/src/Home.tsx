@@ -46,6 +46,9 @@ function Home() {
           <Typography gutterBottom variant="h6" component="div">
             {prode.name} | {prode.tournamentname}
           </Typography>
+          <Typography gutterBottom variant="subtitle1" component="div">
+            by {prode.author_name}
+          </Typography>
         </CardContent>
         <CardActions>
           <Button size="small" href={`/p/${prode.id}`}>
