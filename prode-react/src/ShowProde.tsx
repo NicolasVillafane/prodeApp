@@ -203,6 +203,40 @@ const ShowProde = () => {
               </div>
             </Grid>
           </Grid>
+          {/* Place the buttons here */}
+          {data.prode.length > 0 && userId && (
+            <Grid
+              container
+              spacing={2}
+              justifyContent="flex-start"
+              alignItems="center"
+            >
+              <Grid item>
+                {!data.prode[0]?.joined_users_info.find(
+                  (user) => user.id === userId
+                ) &&
+                  data.prode[0]?.author_id !== userId &&
+                  data.prode[0]?.ispublic && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleJoinProde}
+                    >
+                      Join Prode
+                    </Button>
+                  )}
+                {data.prode[0]?.author_id === userId && (
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={handleDeleteProde}
+                  >
+                    Delete Prode
+                  </Button>
+                )}
+              </Grid>
+            </Grid>
+          )}
         </Grid>
         <Grid
           container
@@ -248,34 +282,6 @@ const ShowProde = () => {
             )}
           </Grid>
         </Grid>
-        {data.prode.length > 0 && userId && (
-          <Grid container spacing={2} justifyContent="flex-end">
-            <Grid item>
-              {!data.prode[0]?.joined_users_info.find(
-                (user) => user.id === userId
-              ) &&
-                data.prode[0]?.author_id !== userId &&
-                data.prode[0]?.ispublic && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleJoinProde}
-                  >
-                    Join Prode
-                  </Button>
-                )}
-              {data.prode[0]?.author_id === userId && (
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={handleDeleteProde}
-                >
-                  Delete Prode
-                </Button>
-              )}
-            </Grid>
-          </Grid>
-        )}
       </Container>
     </div>
   );
