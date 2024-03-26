@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-import keycloak from './Keycloak'; // Import the Keycloak instance
+import keycloak from './Keycloak';
 import Appbar from './Appbar';
 
 import {
@@ -47,14 +47,17 @@ const validationSchema = yup.object({
 const CreateProde = () => {
   const [name, setName] = useState('');
   const [tournament, setTournament] = useState('');
-  const [data, setData] = useState<Tournament[]>([]); // Specify the type as Tournament array
+  const [data, setData] = useState<Tournament[]>([]);
   const [isPublic, setIsPublic] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/create-prode');
+        const response = await fetch('/tournaments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch tournaments');
+        }
         const result = await response.json();
         setData(result);
       } catch (error) {
@@ -76,7 +79,7 @@ const CreateProde = () => {
         return;
       }
 
-      const user = keycloak.authenticated ? keycloak.tokenParsed : null; // Get authenticated user info
+      const user = keycloak.authenticated ? keycloak.tokenParsed : null;
 
       const response = await fetch('/create-prode', {
         method: 'post',
@@ -85,17 +88,19 @@ const CreateProde = () => {
           tournamentId: selectedTournament?.id,
           tournamentName: formik.values.tournament,
           isPublic: isPublic,
-          authorId: user?.sub, // Pass the user ID if authenticated, null otherwise
-          authorName: user?.preferred_username, // Pass the username if authenticated, null otherwise
+          authorId: user?.sub,
+          authorName: user?.preferred_username,
         }),
         headers: { 'content-type': 'application/json' },
       });
-      await response.json();
-      console.log(response);
+      if (!response.ok) {
+        throw new Error('Failed to create Prode');
+      }
 
-      navigate('/'); // Redirect to the "/" route
+      // Since there's no data returned from the server, no need to parse JSON
+      navigate('/');
     } catch (error) {
-      console.log(error);
+      console.error('Error creating Prode:', error);
     }
   };
 
@@ -160,7 +165,6 @@ const CreateProde = () => {
                   </FormControl>
                 </Grid>
 
-                {/* Checkbox or Switch to set prode as public or private */}
                 <Grid item xs={12}>
                   <FormControlLabel
                     control={
