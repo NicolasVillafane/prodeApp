@@ -256,21 +256,16 @@ export const getUsers = async () => {
 
 export const getUserById = (userId) => {
   return new Promise((resolve, reject) => {
-    // Execute the query to fetch the user by ID
     userPool.query(
       'SELECT * FROM users WHERE id = $1',
       [userId],
       (error, result) => {
         if (error) {
-          // If there's an error, reject the promise with the error object
           reject(error);
         } else {
-          // Check if the query returned any rows
           if (result.rows.length > 0) {
-            // Resolve the promise with the first row (assuming user ID is unique)
             resolve(result.rows[0]);
           } else {
-            // If no rows were returned, the user doesn't exist, so resolve with null
             resolve(null);
           }
         }
@@ -281,16 +276,13 @@ export const getUserById = (userId) => {
 
 export const joinProde = async (prodeId, userId, username) => {
   try {
-    // Update the prode table to include the joined user
     await prodePool.query(
       'UPDATE prodes SET joined_users_info = joined_users_info || $1 WHERE id = $2',
       [{ id: userId, username: username }, prodeId]
     );
 
-    // Return success message
     return { success: true };
   } catch (error) {
-    // Return error if any
     throw error;
   }
 };

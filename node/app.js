@@ -27,7 +27,6 @@ const app = express();
 const port = 3001;
 const footballDataApiKey = process.env.APIKEY;
 
-// Middleware configuration loaded from keycloak.json file.
 const keycloak = new Keycloak({});
 
 app.use(keycloak.middleware());
@@ -91,7 +90,7 @@ app.get('/p/:id', async (req, res) => {
       prode: prodeData,
       football: footballData.matches,
       currentMatchday: currentMatchday,
-      isAuthor: isAuthor, // Adding isAuthor to the response data
+      isAuthor: isAuthor,
     };
 
     res.status(200).json(responseData);
@@ -105,10 +104,10 @@ app.get('/p/:id/invite', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const users = await getUsers(); // Implement this function to fetch users
-    const prode = { id }; // Construct the prode object with the provided id
+    const users = await getUsers();
+    const prode = { id };
 
-    const responseData = { users, prode }; // Combine users and prode into responseData
+    const responseData = { users, prode };
 
     console.log(responseData.users);
     res.status(200).json(responseData);
@@ -121,7 +120,7 @@ app.get('/p/:id/invite', async (req, res) => {
 app.get('/tournaments', (req, res) => {
   getTournaments()
     .then((response) => {
-      console.log('Tournaments:', response); // Log the response object
+      console.log('Tournaments:', response);
       res.status(200).json(response);
     })
     .catch((error) => {
@@ -175,24 +174,18 @@ app.get('/create-prode', (req, res) => {
 });
 
 app.post('/keycloak-events', (req, res) => {
-  const eventType = req.body['type']; // Type of event
-  const eventData = req.body['data']; // Event data, including user information
+  const eventType = req.body['type'];
+  const eventData = req.body['data'];
 
-  // Check if the event is a user creation event
   if (eventType === 'CREATE' && eventData['type'] === 'USER') {
-    // Extract user information from eventData
     const { userId, username, email } = eventData['details'];
 
-    // Check if the user already exists in the database
-    // Assuming you have a function `getUserById` to check if the user exists
     getUserById(userId)
       .then((existingUser) => {
         if (existingUser) {
           console.log('User already exists in the database:', existingUser);
-          // You can choose to ignore the event or update existing user information here
           res.status(200).send('User already exists in the database.');
         } else {
-          // Save user information to PostgreSQL database
           saveUserToDatabase(userId, username, email);
           res.status(200).send('User created event received and processed.');
         }
@@ -226,15 +219,12 @@ app.post('/create-prode', (req, res) => {
     });
 });
 
-// Endpoint for sending invitations via email
 app.post('/send-invitation', async (req, res) => {
   try {
     const { prodeId, receiverEmail, selectedUser, selectedUserId } = req.body;
 
-    // Generate a unique invitation token
     const invitationToken = uuid();
 
-    // Save the invitation token in the database
     await saveInvitationToken(
       prodeId,
       invitationToken,
@@ -243,7 +233,6 @@ app.post('/send-invitation', async (req, res) => {
       selectedUserId
     );
 
-    // Construct the invitation link with the token and selectedUser information
     const invitationLink = `http://localhost:3000/confirm-invitation?prodeId=${prodeId}&token=${invitationToken}&selectedUser=${selectedUser}&selectedUserId=${selectedUserId}`;
 
     const mailOptions = {
@@ -268,7 +257,6 @@ app.post('/confirm-invitation', async (req, res) => {
 
     console.log(req.body);
 
-    // Verify the invitation token against the database
     const isValidToken = await verifyInvitationToken(
       prodeId,
       token,
@@ -280,7 +268,6 @@ app.post('/confirm-invitation', async (req, res) => {
       return res.status(400).json({ error: 'Invalid token' });
     }
 
-    // Join the user to the prode
     await joinProde(prodeId, selectedUserId, selectedUser);
 
     res.status(200).json({ message: 'User joined the prode successfully' });
@@ -295,7 +282,6 @@ app.post('/p/:id/join', async (req, res) => {
     const { id } = req.params;
     const { userId, username } = req.body;
 
-    // Check if the prode exists
     const prodeData = await getProde(id);
     if (!prodeData || prodeData.length === 0) {
       return res.status(404).json({ error: 'Prode not found' });
@@ -303,12 +289,10 @@ app.post('/p/:id/join', async (req, res) => {
 
     const prode = prodeData[0];
 
-    // Check if the prode is public
     if (!prode.ispublic) {
       return res.status(403).json({ error: 'Prode is not public' });
     }
 
-    // Join the prode using database function
     await joinProde(id, userId, username);
 
     res.status(200).json({ message: 'User joined the prode successfully' });
@@ -321,7 +305,6 @@ app.post('/p/:id/join', async (req, res) => {
 app.delete('/p/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    // Call the function to delete the prode from the database
     await deleteProde(id);
     res.status(200).json({ message: 'Prode deleted successfully' });
   } catch (error) {

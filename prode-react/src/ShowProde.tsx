@@ -121,8 +121,6 @@ const ShowProde = () => {
         },
         body: JSON.stringify({ userId, username }),
       });
-
-      // Rest of your code...
     } catch (error) {
       console.error('Error joining prode:', error);
     }
@@ -227,7 +225,7 @@ const ShowProde = () => {
                       variant="contained"
                       color="primary"
                       onClick={handleJoinProde}
-                      style={{ marginRight: '8px' }} // Add margin between buttons
+                      style={{ marginRight: '8px' }}
                     >
                       Join Prode
                     </Button>
@@ -238,7 +236,7 @@ const ShowProde = () => {
                       variant="contained"
                       color="primary"
                       onClick={handleInvite}
-                      style={{ marginRight: '8px' }} // Add margin between buttons
+                      style={{ marginRight: '8px' }}
                     >
                       Invite
                     </Button>

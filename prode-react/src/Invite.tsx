@@ -20,7 +20,7 @@ import keycloak from './Keycloak';
 interface User {
   id: string;
   username: string;
-  email: string; // Add the email property
+  email: string;
 }
 
 const validationSchema = yup.object({
@@ -30,7 +30,7 @@ const validationSchema = yup.object({
 const Invite = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]); // Provide the type hint here
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -50,7 +50,6 @@ const Invite = () => {
   const handleSubmit = async () => {
     try {
       if (!selectedUser) {
-        // Handle the case where no user is selected
         console.error('No user selected');
         return;
       }
@@ -62,7 +61,7 @@ const Invite = () => {
         },
         body: JSON.stringify({
           prodeId: id,
-          receiverEmail: selectedUser.email, // Assuming `selectedUser` has an `email` property
+          receiverEmail: selectedUser.email,
           senderUserId: keycloak.tokenParsed?.sub,
           selectedUser: selectedUser.username,
           selectedUserId: selectedUser.id,
@@ -84,7 +83,7 @@ const Invite = () => {
 
   const formik = useFormik({
     initialValues: {
-      selectedUser: null, // Set initial value to null
+      selectedUser: null,
     },
     validationSchema: validationSchema,
     onSubmit: handleSubmit,
@@ -114,7 +113,7 @@ const Invite = () => {
                           (user) => user.id === selectedId
                         );
                         setSelectedUser(user ?? null);
-                        formik.setFieldValue('selectedUser', user ?? null); // Update formik value
+                        formik.setFieldValue('selectedUser', user ?? null);
                       }}
                       error={
                         formik.touched.selectedUser &&
