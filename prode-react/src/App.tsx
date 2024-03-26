@@ -12,6 +12,7 @@ import { Box } from '@mui/material';
 import Matches from './Matches';
 import CreateProde from './CreateProde';
 import ShowProde from './ShowProde';
+import Invite from './Invite';
 
 function App() {
   return (
@@ -25,6 +26,14 @@ function App() {
               element={
                 <PrivateRouteGeneral>
                   <ShowProde />
+                </PrivateRouteGeneral>
+              }
+            />
+            <Route
+              path="/p/:id/invite"
+              element={
+                <PrivateRouteGeneral>
+                  <Invite />
                 </PrivateRouteGeneral>
               }
             />

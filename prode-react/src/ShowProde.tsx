@@ -83,30 +83,9 @@ const ShowProde = () => {
 
   const handleInvite = async () => {
     try {
-      const email = prompt('Enter receiver email:');
-      if (email) {
-        const response = await fetch('/send-invitation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prodeId: id,
-            receiverEmail: email,
-            senderUserId: keycloak.tokenParsed?.sub,
-          }),
-        });
-
-        if (response.ok) {
-          alert('Invitation sent successfully');
-        } else {
-          const errorData = await response.json();
-          throw new Error(errorData.error);
-        }
-      }
+      navigate(`/p/${id}/invite`);
     } catch (error) {
-      console.error('Error sending invitation:', error);
-      alert('Error sending invitation');
+      console.error('Error navigating to invite route:', error);
     }
   };
 

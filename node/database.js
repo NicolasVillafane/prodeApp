@@ -196,6 +196,26 @@ export const saveUserToDatabase = (userId, username, email) => {
   );
 };
 
+export const getUsers = async () => {
+  try {
+    return await new Promise(function (resolve, reject) {
+      userPool.query('SELECT * FROM users', (error, results) => {
+        if (error) {
+          reject(error);
+        }
+        if (results && results.rows) {
+          resolve(results.rows);
+        } else {
+          reject(new Error('No results found'));
+        }
+      });
+    });
+  } catch (error_1) {
+    console.error(error_1);
+    throw new Error('Internal server error');
+  }
+};
+
 export const getUserById = (userId) => {
   return new Promise((resolve, reject) => {
     // Execute the query to fetch the user by ID

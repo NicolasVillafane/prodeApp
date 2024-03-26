@@ -12,6 +12,7 @@ import {
   getProde,
   saveUserToDatabase,
   getUserById,
+  getUsers,
   deleteProde,
   joinProde,
   checkIfUserWithEmailExists,
@@ -93,6 +94,22 @@ app.get('/p/:id', async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send(error);
+  }
+});
+
+app.get('/p/:id/invite', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const users = await getUsers(); // Implement this function to fetch users
+    const prode = { id }; // Construct the prode object with the provided id
+
+    const responseData = { users, prode }; // Combine users and prode into responseData
+
+    res.status(200).json(responseData);
+  } catch (error) {
+    console.error('Error fetching users for invitation:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
