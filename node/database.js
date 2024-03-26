@@ -237,6 +237,19 @@ export const joinProde = async (prodeId, userId, username) => {
   }
 };
 
+export const checkIfUserWithEmailExists = async (email) => {
+  try {
+    const result = await userPool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Error checking user with email:', error);
+    throw error;
+  }
+};
+
 export default {
   createTournament,
   getTournament,
@@ -248,4 +261,5 @@ export default {
   getUserById,
   deleteProde,
   joinProde,
+  checkIfUserWithEmailExists,
 };

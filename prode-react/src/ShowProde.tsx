@@ -81,6 +81,35 @@ const ShowProde = () => {
     fetchData();
   }, [id, userId]);
 
+  const handleInvite = async () => {
+    try {
+      const email = prompt('Enter receiver email:');
+      if (email) {
+        const response = await fetch('/send-invitation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prodeId: id,
+            receiverEmail: email,
+            senderUserId: keycloak.tokenParsed?.sub,
+          }),
+        });
+
+        if (response.ok) {
+          alert('Invitation sent successfully');
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      alert('Error sending invitation');
+    }
+  };
+
   const handleCheckboxChange = (team: string) => {
     setSelectedWinner(team);
   };
@@ -203,7 +232,6 @@ const ShowProde = () => {
               </div>
             </Grid>
           </Grid>
-          {/* Place the buttons here */}
           {data.prode.length > 0 && userId && (
             <Grid
               container
@@ -215,14 +243,25 @@ const ShowProde = () => {
                 {!data.prode[0]?.joined_users_info.find(
                   (user) => user.id === userId
                 ) &&
-                  data.prode[0]?.author_id !== userId &&
                   data.prode[0]?.ispublic && (
                     <Button
                       variant="contained"
                       color="primary"
                       onClick={handleJoinProde}
+                      style={{ marginRight: '8px' }} // Add margin between buttons
                     >
                       Join Prode
+                    </Button>
+                  )}
+                {data.prode[0]?.author_id === userId &&
+                  !data.prode[0]?.ispublic && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleInvite}
+                      style={{ marginRight: '8px' }} // Add margin between buttons
+                    >
+                      Invite
                     </Button>
                   )}
                 {data.prode[0]?.author_id === userId && (

@@ -3,6 +3,7 @@ import Keycloak from 'keycloak-connect';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import FootballDataApi from './FootballDataApi.cjs';
+import nodemailer from 'nodemailer';
 import {
   getTournaments,
   createTournament,
@@ -13,6 +14,7 @@ import {
   getUserById,
   deleteProde,
   joinProde,
+  checkIfUserWithEmailExists,
 } from './database.js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -28,6 +30,14 @@ app.use(keycloak.middleware());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+const transporter = nodemailer.createTransport({
+  service: 'hotmail',
+  auth: {
+    user: 'teyema1630@hotmail.com',
+    pass: process.env.MAILPASS,
+  },
+});
 
 app.get('/home', (req, res) => {
   getProdes()
@@ -192,6 +202,53 @@ app.post('/create-prode', (req, res) => {
     .catch((error) => {
       res.status(500).send(error);
     });
+});
+
+// Endpoint for sending invitations via email
+app.post('/send-invitation', async (req, res) => {
+  try {
+    const { prodeId, receiverEmail, senderUserId } = req.body;
+
+    // Fetch prode data from the database
+    const prodeData = await getProde(prodeId);
+
+    // Check if the prode exists
+    if (!prodeData || prodeData.length === 0) {
+      return res.status(404).json({ error: 'Prode not found' });
+    }
+
+    const prode = prodeData[0];
+
+    // Check if the sender is the author of the prode
+    if (prode.author_id !== senderUserId) {
+      return res
+        .status(403)
+        .json({ error: 'Only the prode creator can send invitations' });
+    }
+
+    // Check if the receiver's email is associated with a registered user
+    const userWithEmailExists = await checkIfUserWithEmailExists(receiverEmail);
+    if (!userWithEmailExists) {
+      return res
+        .status(400)
+        .json({ error: 'User with this email does not exist' });
+    }
+
+    // Send invitation email
+    const mailOptions = {
+      from: 'teyema1630@hotmail.com',
+      to: receiverEmail,
+      subject: 'Invitation to join private prode',
+      text: `You have been invited to join a private prode. Click the following link to join: http://localhost:3000/p/${prodeId}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: 'Invitation sent successfully' });
+  } catch (error) {
+    console.error('Error sending invitation:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.post('/p/:id/join', async (req, res) => {
