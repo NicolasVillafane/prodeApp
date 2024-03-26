@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -15,15 +15,23 @@ import {
   Container,
 } from '@mui/material';
 import Appbar from './Appbar';
+import keycloak from './Keycloak';
+
+interface User {
+  id: string;
+  username: string;
+  email: string; // Add the email property
+}
 
 const validationSchema = yup.object({
-  selectedUser: yup.string().required('Please select a user'),
+  selectedUser: yup.object().nullable().required('Please select a user'),
 });
 
 const Invite = () => {
   const { id } = useParams();
-  const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState('');
+  const navigate = useNavigate();
+  const [users, setUsers] = useState<User[]>([]); // Provide the type hint here
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchInviteData = async () => {
@@ -41,16 +49,42 @@ const Invite = () => {
 
   const handleSubmit = async () => {
     try {
-      // Add functionality for submitting invitation
-      console.log('Invitation submitted!');
+      if (!selectedUser) {
+        // Handle the case where no user is selected
+        console.error('No user selected');
+        return;
+      }
+
+      const response = await fetch('/send-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prodeId: id,
+          receiverEmail: selectedUser.email, // Assuming `selectedUser` has an `email` property
+          senderUserId: keycloak.tokenParsed?.sub,
+          selectedUser: selectedUser.username,
+          selectedUserId: selectedUser.id,
+        }),
+      });
+
+      if (response.ok) {
+        alert('Invitation sent successfully');
+        navigate(`/p/${id}`);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error);
+      }
     } catch (error) {
-      console.error('Error submitting invitation:', error);
+      console.error('Error sending invitation:', error);
+      alert('Error sending invitation');
     }
   };
 
   const formik = useFormik({
     initialValues: {
-      selectedUser: '',
+      selectedUser: null, // Set initial value to null
     },
     validationSchema: validationSchema,
     onSubmit: handleSubmit,
@@ -73,14 +107,21 @@ const Invite = () => {
                     <Select
                       labelId="user-select-label"
                       id="user-select"
-                      value={selectedUser}
-                      onChange={(e) => setSelectedUser(e.target.value)}
+                      value={selectedUser ? selectedUser.id : ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value as string;
+                        const user = users.find(
+                          (user) => user.id === selectedId
+                        );
+                        setSelectedUser(user ?? null);
+                        formik.setFieldValue('selectedUser', user ?? null); // Update formik value
+                      }}
                       error={
                         formik.touched.selectedUser &&
                         Boolean(formik.errors.selectedUser)
                       }
                     >
-                      {users.map((user: any) => (
+                      {users.map((user) => (
                         <MenuItem key={user.id} value={user.id}>
                           {user.username}
                         </MenuItem>

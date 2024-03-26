@@ -26,6 +26,44 @@ const userPool = new Pool({
   database: 'prodeapp',
 });
 
+const invitationPool = new Pool({
+  host: 'localhost',
+  user: 'postgres',
+  port: 5432,
+  password: 'postgres',
+  database: 'prodeapp',
+});
+
+export const saveInvitationToken = async (
+  prodeId,
+  token,
+  receiverEmail,
+  selectedUser
+) => {
+  try {
+    await invitationPool.query(
+      'INSERT INTO invitations (prode_id, token, receiver_email, selected_user) VALUES ($1, $2, $3, $4)',
+      [prodeId, token, receiverEmail, selectedUser]
+    );
+  } catch (error) {
+    console.error('Error saving invitation token:', error);
+    throw error;
+  }
+};
+
+export const verifyInvitationToken = async (prodeId, token, selectedUser) => {
+  try {
+    const result = await invitationPool.query(
+      'SELECT * FROM invitations WHERE prode_id = $1 AND token = $2 AND selected_user = $3',
+      [prodeId, token, selectedUser]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Error verifying invitation token:', error);
+    throw error;
+  }
+};
+
 export const getTournaments = async () => {
   try {
     return await new Promise(function (resolve, reject) {
@@ -282,4 +320,6 @@ export default {
   deleteProde,
   joinProde,
   checkIfUserWithEmailExists,
+  saveInvitationToken,
+  verifyInvitationToken,
 };

@@ -13,6 +13,7 @@ import Matches from './Matches';
 import CreateProde from './CreateProde';
 import ShowProde from './ShowProde';
 import Invite from './Invite';
+import ConfirmInvitation from './ConfirmInvitation';
 
 function App() {
   return (
@@ -34,6 +35,14 @@ function App() {
               element={
                 <PrivateRouteGeneral>
                   <Invite />
+                </PrivateRouteGeneral>
+              }
+            />
+            <Route
+              path="/confirm-invitation"
+              element={
+                <PrivateRouteGeneral>
+                  <ConfirmInvitation />
                 </PrivateRouteGeneral>
               }
             />

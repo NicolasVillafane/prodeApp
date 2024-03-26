@@ -16,7 +16,10 @@ import {
   deleteProde,
   joinProde,
   checkIfUserWithEmailExists,
+  saveInvitationToken,
+  verifyInvitationToken,
 } from './database.js';
+import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -29,7 +32,7 @@ const keycloak = new Keycloak({});
 
 app.use(keycloak.middleware());
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 const transporter = nodemailer.createTransport({
@@ -56,6 +59,7 @@ app.get('/p/:id', async (req, res) => {
     const userId = req.query.userId;
     let prodeData = await getProde(id);
     const isAuthor = prodeData[0].author_id === userId;
+    console.log('params: ', req.query);
 
     let footballData = {};
 
@@ -106,6 +110,7 @@ app.get('/p/:id/invite', async (req, res) => {
 
     const responseData = { users, prode }; // Combine users and prode into responseData
 
+    console.log(responseData.users);
     res.status(200).json(responseData);
   } catch (error) {
     console.error('Error fetching users for invitation:', error);
@@ -224,39 +229,28 @@ app.post('/create-prode', (req, res) => {
 // Endpoint for sending invitations via email
 app.post('/send-invitation', async (req, res) => {
   try {
-    const { prodeId, receiverEmail, senderUserId } = req.body;
+    const { prodeId, receiverEmail, selectedUser, selectedUserId } = req.body;
 
-    // Fetch prode data from the database
-    const prodeData = await getProde(prodeId);
+    // Generate a unique invitation token
+    const invitationToken = uuid();
 
-    // Check if the prode exists
-    if (!prodeData || prodeData.length === 0) {
-      return res.status(404).json({ error: 'Prode not found' });
-    }
+    // Save the invitation token in the database
+    await saveInvitationToken(
+      prodeId,
+      invitationToken,
+      receiverEmail,
+      selectedUser,
+      selectedUserId
+    );
 
-    const prode = prodeData[0];
+    // Construct the invitation link with the token and selectedUser information
+    const invitationLink = `http://localhost:3000/confirm-invitation?prodeId=${prodeId}&token=${invitationToken}&selectedUser=${selectedUser}&selectedUserId=${selectedUserId}`;
 
-    // Check if the sender is the author of the prode
-    if (prode.author_id !== senderUserId) {
-      return res
-        .status(403)
-        .json({ error: 'Only the prode creator can send invitations' });
-    }
-
-    // Check if the receiver's email is associated with a registered user
-    const userWithEmailExists = await checkIfUserWithEmailExists(receiverEmail);
-    if (!userWithEmailExists) {
-      return res
-        .status(400)
-        .json({ error: 'User with this email does not exist' });
-    }
-
-    // Send invitation email
     const mailOptions = {
       from: 'teyema1630@hotmail.com',
       to: receiverEmail,
       subject: 'Invitation to join private prode',
-      text: `You have been invited to join a private prode. Click the following link to join: http://localhost:3000/p/${prodeId}`,
+      text: `You have been invited to join a private prode. Click the following link to join: ${invitationLink}`,
     };
 
     await transporter.sendMail(mailOptions);
@@ -264,6 +258,34 @@ app.post('/send-invitation', async (req, res) => {
     res.status(200).json({ message: 'Invitation sent successfully' });
   } catch (error) {
     console.error('Error sending invitation:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/confirm-invitation', async (req, res) => {
+  try {
+    const { prodeId, token, selectedUser, selectedUserId } = req.body;
+
+    console.log(req.body);
+
+    // Verify the invitation token against the database
+    const isValidToken = await verifyInvitationToken(
+      prodeId,
+      token,
+      selectedUser,
+      selectedUserId
+    );
+
+    if (!isValidToken) {
+      return res.status(400).json({ error: 'Invalid token' });
+    }
+
+    // Join the user to the prode
+    await joinProde(prodeId, selectedUserId, selectedUser);
+
+    res.status(200).json({ message: 'User joined the prode successfully' });
+  } catch (error) {
+    console.error('Error confirming invitation:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
