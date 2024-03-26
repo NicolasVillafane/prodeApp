@@ -1,8 +1,7 @@
-import { ReactKeycloakProvider } from '@react-keycloak/web';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { ReactNode } from 'react';
+import { ReactKeycloakProvider, useKeycloak } from '@react-keycloak/web';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import keycloak from './Keycloak';
-import PrivateRoute from './PrivateRoute';
-import PrivateRouteGeneral from './PrivateRouteGeneral';
 import AdminConfig from './AdminConfig';
 import AddTournament from './AddTournament';
 import ShowTournament from './ShowTournament';
@@ -15,6 +14,14 @@ import ShowProde from './ShowProde';
 import Invite from './Invite';
 import ConfirmInvitation from './ConfirmInvitation';
 
+interface SecureRouteProps {
+  element: ReactNode;
+}
+
+interface SecureAdminRouteProps {
+  element: ReactNode;
+}
+
 function App() {
   return (
     <Box>
@@ -24,75 +31,39 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route
               path="/p/:id"
-              element={
-                <PrivateRouteGeneral>
-                  <ShowProde />
-                </PrivateRouteGeneral>
-              }
+              element={<SecureRoute element={<ShowProde />} />}
             />
             <Route
               path="/p/:id/invite"
-              element={
-                <PrivateRouteGeneral>
-                  <Invite />
-                </PrivateRouteGeneral>
-              }
+              element={<SecureRoute element={<Invite />} />}
             />
             <Route
               path="/confirm-invitation"
-              element={
-                <PrivateRouteGeneral>
-                  <ConfirmInvitation />
-                </PrivateRouteGeneral>
-              }
+              element={<SecureRoute element={<ConfirmInvitation />} />}
             />
             <Route
               path="/create-prode"
-              element={
-                <PrivateRouteGeneral>
-                  <CreateProde />
-                </PrivateRouteGeneral>
-              }
+              element={<SecureRoute element={<CreateProde />} />}
             />
             <Route
               path="/admin"
-              element={
-                <PrivateRoute>
-                  <AdminConfig />
-                </PrivateRoute>
-              }
+              element={<SecureAdminRoute element={<AdminConfig />} />}
             />
             <Route
               path="/admin/add"
-              element={
-                <PrivateRoute>
-                  <AddTournament />
-                </PrivateRoute>
-              }
+              element={<SecureAdminRoute element={<AddTournament />} />}
             />
             <Route
-              path="tournaments"
-              element={
-                <PrivateRouteGeneral>
-                  <Tournaments />
-                </PrivateRouteGeneral>
-              }
+              path="/tournaments"
+              element={<SecureRoute element={<Tournaments />} />}
             />
             <Route
-              path="tournaments/:id"
-              element={
-                <PrivateRouteGeneral>
-                  <ShowTournament />
-                </PrivateRouteGeneral>
-              }
+              path="/tournaments/:id"
+              element={<SecureRoute element={<ShowTournament />} />}
             />
             <Route
-              path="tournaments/:id/matches"
-              element={
-                <PrivateRouteGeneral>
-                  <Matches />
-                </PrivateRouteGeneral>
-              }
+              path="/tournaments/:id/matches"
+              element={<SecureRoute element={<Matches />} />}
             />
           </Routes>
         </BrowserRouter>
@@ -100,4 +71,35 @@ function App() {
     </Box>
   );
 }
+
+// Custom secure route component for general user access
+function SecureRoute({ element, ...rest }: SecureRouteProps) {
+  const { initialized, keycloak } = useKeycloak();
+
+  if (!initialized) {
+    return <div>Loading...</div>;
+  }
+
+  return keycloak.authenticated ? (
+    (element as JSX.Element)
+  ) : (
+    <Navigate to="/" />
+  );
+}
+
+// Custom secure route component for admin access
+function SecureAdminRoute({ element, ...rest }: SecureAdminRouteProps) {
+  const { initialized, keycloak } = useKeycloak();
+
+  if (!initialized) {
+    return <div>Loading...</div>;
+  }
+
+  return keycloak.authenticated && keycloak.hasRealmRole('admin') ? (
+    (element as JSX.Element)
+  ) : (
+    <Navigate to="/" />
+  );
+}
+
 export default App;

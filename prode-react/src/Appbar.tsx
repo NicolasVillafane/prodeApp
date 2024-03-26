@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import keycloak from './Keycloak'; // Import the keycloak instance
+import keycloak from './Keycloak';
 import {
   AppBar,
   Button,
@@ -13,9 +13,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 
-// Function to send a POST request to /keycloak-events
 const sendEventToBackend = async () => {
-  // Extract user data from Keycloak object
   const userId = keycloak.tokenParsed?.sub;
   const username = keycloak.tokenParsed?.preferred_username;
   const email = keycloak.tokenParsed?.email;
@@ -31,14 +29,13 @@ const sendEventToBackend = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        type: 'CREATE', // Specify the type of event
+        type: 'CREATE',
         data: {
           type: 'USER',
           details: {
             userId: userId,
             username: username,
             email: email,
-            // Add any other relevant data
           },
         },
       }),
@@ -65,15 +62,11 @@ function Appbar() {
   };
 
   const handleRegister = () => {
-    // Redirect to Keycloak's registration page
     keycloak.register();
   };
 
-  // UseEffect hook to trigger the event after successful authentication
   useEffect(() => {
-    // Check if the user is authenticated
     if (keycloak.authenticated) {
-      // Call the function to send the event to the backend
       sendEventToBackend();
     }
   }, [keycloak.authenticated]);
