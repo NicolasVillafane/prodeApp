@@ -209,14 +209,42 @@ app.post('/admin', (req, res) => {
     });
 });
 
-app.post('/create-prode', (req, res) => {
-  createProde(req.body)
-    .then((response) => {
-      res.status(200).send(response);
-    })
-    .catch((error) => {
-      res.status(500).send(error);
+app.post('/create-prode', async (req, res) => {
+  try {
+    const {
+      name,
+      tournamentId,
+      tournamentName,
+      isPublic,
+      authorId,
+      authorName,
+    } = req.body;
+
+    const id = uuid();
+
+    // Create Prode
+    const prode = await createProde({
+      id,
+      name,
+      tournamentId,
+      tournamentName,
+      isPublic,
+      authorId,
+      authorName,
     });
+
+    console.log('Joining author to Prode with ID:', id);
+    console.log('Author ID:', authorId);
+    console.log('Author Name:', authorName);
+
+    // Join the author to the Prode
+    await joinProde(id, authorId, authorName);
+
+    res.status(200).json(prode);
+  } catch (error) {
+    console.error('Error creating Prode:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.post('/send-invitation', async (req, res) => {

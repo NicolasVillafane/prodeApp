@@ -133,8 +133,8 @@ export const createTournament = (body) => {
 
 export const createProde = (body) => {
   return new Promise(function (resolve, reject) {
-    const id = uuid();
     const {
+      id,
       name,
       tournamentName,
       tournamentId,
