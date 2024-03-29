@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
@@ -10,7 +10,9 @@ import {
   Grid,
   TextField,
   Container,
+  Snackbar,
 } from '@mui/material';
+import { Alert } from '@mui/material';
 import Appbar from './Appbar';
 import keycloak from './Keycloak';
 
@@ -25,6 +27,23 @@ const Invite = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>(
+    'success'
+  );
+
+  const handleAlertClose = (event: any, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setAlertOpen(false);
+    // Navigate only if the reason for closing is not 'clickaway'
+    if (reason !== 'clickaway') {
+      navigate(`/p/${id}`);
+    }
+  };
 
   const handleSubmit = async (values: any) => {
     try {
@@ -44,15 +63,21 @@ const Invite = () => {
       setLoading(false);
 
       if (response.ok) {
-        alert('Invitation sent successfully');
-        navigate(`/p/${id}`);
+        setAlertSeverity('success');
+        setAlertMessage('Invitation sent successfully');
+        setAlertOpen(true);
+        // Do not navigate until the alert is dismissed
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.error);
+        setAlertSeverity('error');
+        setAlertMessage(errorData.error);
+        setAlertOpen(true);
       }
     } catch (error) {
       console.error('Error sending invitation:', error);
-      alert('Error sending invitation');
+      setAlertSeverity('error');
+      setAlertMessage('Error sending invitation');
+      setAlertOpen(true);
     }
   };
 
@@ -71,7 +96,9 @@ const Invite = () => {
         <Typography variant="h3" textAlign="center">
           Invite Users
         </Typography>
-        <Card style={{ maxWidth: 450, margin: '0 auto', padding: '20px 5px' }}>
+        <Card
+          style={{ maxWidth: 450, margin: '20px auto', padding: '20px 5px' }}
+        >
           <CardContent>
             <form onSubmit={formik.handleSubmit}>
               <Grid container spacing={2}>
@@ -108,6 +135,22 @@ const Invite = () => {
             </form>
           </CardContent>
         </Card>
+        <Snackbar
+          open={alertOpen}
+          autoHideDuration={6000}
+          onClose={handleAlertClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          style={{ marginBottom: '20px' }}
+        >
+          <Alert
+            onClose={handleAlertClose}
+            severity={alertSeverity}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {alertMessage}
+          </Alert>
+        </Snackbar>
       </Container>
     </div>
   );
