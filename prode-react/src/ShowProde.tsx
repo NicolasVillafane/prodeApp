@@ -273,35 +273,43 @@ const ShowProde = () => {
           <Grid item xs={6}>
             <Typography variant="h3">Leaderboards</Typography>
           </Grid>
-          <Grid
-            item
-            xs={6}
-            textAlign="left"
-            style={{ borderRight: '1px solid #000' }}
-          >
-            {matches.length > 0 ? (
-              <Container>{matches}</Container>
-            ) : (
-              <Typography variant="h5">No Matches!</Typography>
-            )}
-          </Grid>
-          <Grid item xs={6} textAlign="left">
-            {joinedUsers.length > 0 ? (
-              <List component="ol">
-                {joinedUsers.map((user, index) => (
-                  <ListItem key={index}>
-                    <ListItemText>
-                      <Typography variant="h6">
-                        {`${index + 1}. ${user.props.children}`}
-                      </Typography>
-                    </ListItemText>
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Typography variant="body1">No users have joined yet!</Typography>
-            )}
-          </Grid>
+          {data.prode[0]?.joined_users_info.find(
+            (user) => user.id === userId
+          ) && (
+            <>
+              <Grid
+                item
+                xs={6}
+                textAlign="left"
+                style={{ borderRight: '1px solid #000' }}
+              >
+                {matches.length > 0 ? (
+                  <Container>{matches}</Container>
+                ) : (
+                  <Typography variant="h5">No Matches!</Typography>
+                )}
+              </Grid>
+              <Grid item xs={6} textAlign="left">
+                {joinedUsers.length > 0 ? (
+                  <List component="ol">
+                    {joinedUsers.map((user, index) => (
+                      <ListItem key={index}>
+                        <ListItemText>
+                          <Typography variant="h6">
+                            {`${index + 1}. ${user.props.children}`}
+                          </Typography>
+                        </ListItemText>
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography variant="body1">
+                    No users have joined yet!
+                  </Typography>
+                )}
+              </Grid>
+            </>
+          )}
         </Grid>
       </Container>
     </div>
