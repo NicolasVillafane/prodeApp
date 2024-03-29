@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -8,51 +8,27 @@ import {
   Card,
   CardContent,
   Grid,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  TextField,
   Container,
 } from '@mui/material';
 import Appbar from './Appbar';
 import keycloak from './Keycloak';
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-}
-
 const validationSchema = yup.object({
-  selectedUser: yup.object().nullable().required('Please select a user'),
+  receiverEmail: yup
+    .string()
+    .email('Invalid email')
+    .required('Email is required'),
 });
 
 const Invite = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchInviteData = async () => {
-      try {
-        const response = await fetch(`/p/${id}/invite`);
-        const responseData = await response.json();
-        setUsers(responseData.users);
-      } catch (error) {
-        console.error('Error fetching invitation data:', error);
-      }
-    };
-
-    fetchInviteData();
-  }, [id]);
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (values: any) => {
     try {
-      if (!selectedUser) {
-        console.error('No user selected');
-        return;
-      }
+      setLoading(true);
 
       const response = await fetch('/send-invitation', {
         method: 'POST',
@@ -61,12 +37,11 @@ const Invite = () => {
         },
         body: JSON.stringify({
           prodeId: id,
-          receiverEmail: selectedUser.email,
-          senderUserId: keycloak.tokenParsed?.sub,
-          selectedUser: selectedUser.username,
-          selectedUserId: selectedUser.id,
+          receiverEmail: values.receiverEmail,
         }),
       });
+
+      setLoading(false);
 
       if (response.ok) {
         alert('Invitation sent successfully');
@@ -83,7 +58,7 @@ const Invite = () => {
 
   const formik = useFormik({
     initialValues: {
-      selectedUser: null,
+      receiverEmail: '',
     },
     validationSchema: validationSchema,
     onSubmit: handleSubmit,
@@ -99,44 +74,34 @@ const Invite = () => {
         <Card style={{ maxWidth: 450, margin: '0 auto', padding: '20px 5px' }}>
           <CardContent>
             <form onSubmit={formik.handleSubmit}>
-              <Grid container spacing={1}>
+              <Grid container spacing={2}>
                 <Grid xs={12} item>
-                  <FormControl fullWidth>
-                    <InputLabel id="user-select-label">Select User</InputLabel>
-                    <Select
-                      labelId="user-select-label"
-                      id="user-select"
-                      value={selectedUser ? selectedUser.id : ''}
-                      onChange={(e) => {
-                        const selectedId = e.target.value as string;
-                        const user = users.find(
-                          (user) => user.id === selectedId
-                        );
-                        setSelectedUser(user ?? null);
-                        formik.setFieldValue('selectedUser', user ?? null);
-                      }}
-                      error={
-                        formik.touched.selectedUser &&
-                        Boolean(formik.errors.selectedUser)
-                      }
-                    >
-                      {users.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          {user.username}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  {formik.touched.selectedUser &&
-                    formik.errors.selectedUser && (
-                      <Typography variant="body2" color="error">
-                        {formik.errors.selectedUser}
-                      </Typography>
-                    )}
+                  <TextField
+                    fullWidth
+                    id="receiverEmail"
+                    name="receiverEmail"
+                    label="Recipient Email"
+                    variant="outlined"
+                    value={formik.values.receiverEmail}
+                    onChange={formik.handleChange}
+                    error={
+                      formik.touched.receiverEmail &&
+                      Boolean(formik.errors.receiverEmail)
+                    }
+                    helperText={
+                      formik.touched.receiverEmail &&
+                      formik.errors.receiverEmail
+                    }
+                  />
                 </Grid>
                 <Grid xs={12} item>
-                  <Button fullWidth variant="contained" type="submit">
-                    Invite
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading ? 'Sending...' : 'Send Invitation'}
                   </Button>
                 </Grid>
               </Grid>

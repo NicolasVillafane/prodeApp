@@ -1,51 +1,46 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Appbar from './Appbar';
-
-interface InvitationData {
-  prodeId: string;
-  token: string;
-  selectedUser: string | null;
-  selectedUserId: string | null;
-}
+import { useKeycloak } from '@react-keycloak/web';
 
 const ConfirmInvitation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { keycloak } = useKeycloak();
 
   useEffect(() => {
-    const prodeId = searchParams.get('prodeId');
     const token = searchParams.get('token');
-    const selectedUser = searchParams.get('selectedUser');
-    const selectedUserId = searchParams.get('selectedUserId');
 
-    if (prodeId && token && selectedUser && selectedUserId) {
-      confirmInvitation({ prodeId, token, selectedUser, selectedUserId });
+    if (token) {
+      confirmInvitation(token);
     }
   }, [location.search, navigate, searchParams]);
 
-  const confirmInvitation = async (data: InvitationData) => {
+  const confirmInvitation = async (token: any) => {
     try {
-      if (data.selectedUser === null) {
-        throw new Error('Selected user is null');
-      }
-      console.log({ data }, 'dsdsd');
+      console.log('Sending token:', token); // Log the token sent to the server
+
       const response = await fetch('/confirm-invitation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${keycloak.token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          token: token,
+        }),
       });
 
       if (response.ok) {
-        navigate(`/p/${data.prodeId}`);
+        const responseData = await response.json();
+        console.log('Invitation confirmed successfully:', responseData); // Log the response from the server
+        navigate(`/`);
       } else {
         throw new Error('Failed to confirm invitation');
       }
     } catch (error) {
-      console.error('Error confirming invitation:', error);
+      console.error('Error confirming invitation:', error); // Log any errors that occur
     }
   };
 

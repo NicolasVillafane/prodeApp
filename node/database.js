@@ -34,16 +34,11 @@ const invitationPool = new Pool({
   database: 'prodeapp',
 });
 
-export const saveInvitationToken = async (
-  prodeId,
-  token,
-  receiverEmail,
-  selectedUser
-) => {
+export const saveInvitationToken = async (prodeId, token, receiverEmail) => {
   try {
     await invitationPool.query(
-      'INSERT INTO invitations (prode_id, token, receiver_email, selected_user) VALUES ($1, $2, $3, $4)',
-      [prodeId, token, receiverEmail, selectedUser]
+      'INSERT INTO invitations (prode_id, token, receiver_email) VALUES ($1, $2, $3)',
+      [prodeId, token, receiverEmail]
     );
   } catch (error) {
     console.error('Error saving invitation token:', error);
@@ -51,11 +46,11 @@ export const saveInvitationToken = async (
   }
 };
 
-export const verifyInvitationToken = async (prodeId, token, selectedUser) => {
+export const verifyInvitationToken = async (prodeId, token) => {
   try {
     const result = await invitationPool.query(
-      'SELECT * FROM invitations WHERE prode_id = $1 AND token = $2 AND selected_user = $3',
-      [prodeId, token, selectedUser]
+      'SELECT * FROM invitations WHERE prode_id = $1 AND token = $2',
+      [prodeId, token]
     );
     return result.rows.length > 0;
   } catch (error) {
@@ -330,6 +325,30 @@ export const checkIfUserWithEmailExists = async (email) => {
   }
 };
 
+export const getInvitationInfoByToken = (token) => {
+  return new Promise((resolve, reject) => {
+    // Convert the token to a string to ensure consistency
+
+    invitationPool.query(
+      'SELECT prode_id, receiver_email FROM invitations WHERE token = $1',
+      [token],
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          if (result.rows.length > 0) {
+            const { prode_id, receiver_email } = result.rows[0];
+            console.log(prode_id, receiver_email);
+            resolve({ prodeId: prode_id, receiverEmail: receiver_email });
+          } else {
+            resolve(null);
+          }
+        }
+      }
+    );
+  });
+};
+
 export default {
   createTournament,
   getTournament,
@@ -346,4 +365,5 @@ export default {
   verifyInvitationToken,
   getPublicProdes,
   getPrivateProdesForUser,
+  getInvitationInfoByToken,
 };

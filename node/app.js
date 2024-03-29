@@ -21,6 +21,7 @@ import {
   verifyInvitationToken,
   getPublicProdes,
   getPrivateProdesForUser,
+  getInvitationInfoByToken,
 } from './database.js';
 import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
@@ -276,19 +277,13 @@ app.post('/create-prode', async (req, res) => {
 
 app.post('/send-invitation', async (req, res) => {
   try {
-    const { prodeId, receiverEmail, selectedUser, selectedUserId } = req.body;
+    const { prodeId, receiverEmail } = req.body;
 
     const invitationToken = uuid();
 
-    await saveInvitationToken(
-      prodeId,
-      invitationToken,
-      receiverEmail,
-      selectedUser,
-      selectedUserId
-    );
+    await saveInvitationToken(prodeId, invitationToken, receiverEmail);
 
-    const invitationLink = `http://localhost:3000/confirm-invitation?prodeId=${prodeId}&token=${invitationToken}&selectedUser=${selectedUser}&selectedUserId=${selectedUserId}`;
+    const invitationLink = `http://localhost:3000/confirm-invitation?token=${invitationToken}`;
 
     const mailOptions = {
       from: 'teyema1630@hotmail.com',
@@ -308,22 +303,37 @@ app.post('/send-invitation', async (req, res) => {
 
 app.post('/confirm-invitation', async (req, res) => {
   try {
-    const { prodeId, token, selectedUser, selectedUserId } = req.body;
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Authorization token missing' });
+    }
 
-    console.log(req.body);
+    const authToken = authHeader.split(' ')[1]; // Extracting the token from the header
+    const decodedToken = jwt.decode(authToken);
+    const userId = decodedToken?.sub;
 
-    const isValidToken = await verifyInvitationToken(
-      prodeId,
-      token,
-      selectedUser,
-      selectedUserId
+    // Fetch user data using the userId
+    const currentUser = await getUserById(userId); // Implement this function
+
+    const { token: invitationToken } = req.body; // Renamed token variable to invitationToken
+
+    console.log('Received token:', invitationToken); // Log the token received from the client
+    // Log the token received from the client
+
+    // Get prode_id and receiver_email using the token from the database
+    const { prodeId, receiver_email } = await getInvitationInfoByToken(
+      invitationToken
     );
+    console.log('Prode id:', prodeId);
+    const isValidToken = await verifyInvitationToken(prodeId, invitationToken);
 
     if (!isValidToken) {
       return res.status(400).json({ error: 'Invalid token' });
     }
 
-    await joinProde(prodeId, selectedUserId, selectedUser);
+    console.log(prodeId, currentUser.id, currentUser.username);
+    // Assuming you have a function to join the prode using prode_id and current user info
+    await joinProde(prodeId, currentUser.id, currentUser.username);
 
     res.status(200).json({ message: 'User joined the prode successfully' });
   } catch (error) {
