@@ -69,7 +69,7 @@ function Appbar() {
     if (keycloak.authenticated) {
       sendEventToBackend();
     }
-  }, [keycloak.authenticated]);
+  }, []);
 
   return (
     <AppBar
