@@ -4,6 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import FootballDataApi from './FootballDataApi.cjs';
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
 import {
   getTournaments,
   createTournament,
@@ -18,6 +19,8 @@ import {
   checkIfUserWithEmailExists,
   saveInvitationToken,
   verifyInvitationToken,
+  getPublicProdes,
+  getPrivateProdesForUser,
 } from './database.js';
 import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
@@ -27,7 +30,7 @@ const app = express();
 const port = 3001;
 const footballDataApiKey = process.env.APIKEY;
 
-const keycloak = new Keycloak({});
+const keycloak = new Keycloak({ configFile: 'keycloak.json' });
 
 app.use(keycloak.middleware());
 app.use(cors());
@@ -42,14 +45,38 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-app.get('/home', (req, res) => {
-  getProdes()
-    .then((response) => {
-      res.status(200).json(response);
-    })
-    .catch((error) => {
-      res.status(500).send(error);
-    });
+app.get('/home', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    let allProdes = [];
+
+    if (authHeader) {
+      const token = authHeader.split(' ')[1]; // Extracting the token from the header
+      const decodedToken = jwt.decode(token);
+      const userId = decodedToken?.sub;
+
+      // Fetch private prodes for the user
+      const privateProdes = await getPrivateProdesForUser(userId);
+      allProdes.push(...privateProdes);
+    }
+
+    // Fetch public prodes
+    const publicProdes = await getPublicProdes();
+
+    // Combine public and private prodes
+    allProdes.push(...publicProdes);
+
+    // Remove duplicates
+    const uniqueProdes = Array.from(
+      new Set(allProdes.map((prode) => prode.id))
+    ).map((id) => allProdes.find((prode) => prode.id === id));
+
+    // Send the list of prodes as the response
+    res.status(200).json(uniqueProdes);
+  } catch (error) {
+    console.error('Error fetching prodes:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.get('/p/:id', async (req, res) => {
@@ -177,7 +204,7 @@ app.post('/keycloak-events', (req, res) => {
   const eventType = req.body['type'];
   const eventData = req.body['data'];
 
-  if (eventType === 'CREATE' && eventData['type'] === 'USER') {
+  if (eventType === 'REGISTER' && eventData['type'] === 'USER') {
     const { userId, username, email } = eventData['details'];
 
     getUserById(userId)

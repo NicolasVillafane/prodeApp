@@ -18,9 +18,9 @@ const sendEventToBackend = async () => {
   const username = keycloak.tokenParsed?.preferred_username;
   const email = keycloak.tokenParsed?.email;
 
-  console.log('User ID:', userId);
-  console.log('Username:', username);
-  console.log('Email:', email);
+  // console.log('User ID:', userId);
+  // console.log('Username:', username);
+  // console.log('Email:', email);
 
   try {
     const response = await fetch('/keycloak-events', {
@@ -29,7 +29,7 @@ const sendEventToBackend = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        type: 'CREATE',
+        type: 'REGISTER',
         data: {
           type: 'USER',
           details: {

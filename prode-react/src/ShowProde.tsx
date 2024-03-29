@@ -114,6 +114,11 @@ const ShowProde = () => {
         return;
       }
 
+      if (data.prode[0]?.joined_users_info.find((user) => user.id === userId)) {
+        console.log('User is already joined to this prode.');
+        return;
+      }
+
       await fetch(`/p/${id}/join`, {
         method: 'POST',
         headers: {

@@ -181,6 +181,36 @@ export const getProdes = async () => {
   }
 };
 
+// Function to fetch public prodes
+export const getPublicProdes = async () => {
+  try {
+    // Assuming there's a 'prodes' table with a column 'ispublic' indicating whether a prode is public
+    const query = 'SELECT * FROM prodes WHERE ispublic = true';
+    const { rows } = await prodePool.query(query);
+    return rows;
+  } catch (error) {
+    console.error('Error fetching public prodes:', error);
+    throw error;
+  }
+};
+
+// Function to fetch private prodes for a given user
+export const getPrivateProdesForUser = async (userId) => {
+  try {
+    // Query prodes where author_id matches the given userId or the user is in joined_users_info
+    const query =
+      'SELECT * FROM prodes WHERE author_id = $1 OR joined_users_info::jsonb @> $2';
+    const { rows } = await prodePool.query(query, [
+      userId,
+      `[{"id": "${userId}"}]`,
+    ]);
+    return rows;
+  } catch (error) {
+    console.error('Error fetching private prodes for user:', error);
+    throw error;
+  }
+};
+
 export const getProde = async (id) => {
   try {
     return await new Promise(function (resolve, reject) {
@@ -314,4 +344,6 @@ export default {
   checkIfUserWithEmailExists,
   saveInvitationToken,
   verifyInvitationToken,
+  getPublicProdes,
+  getPrivateProdesForUser,
 };
