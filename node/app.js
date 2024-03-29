@@ -279,6 +279,14 @@ app.post('/send-invitation', async (req, res) => {
   try {
     const { prodeId, receiverEmail } = req.body;
 
+    // Check if the email exists in the users table
+    const userExists = await checkIfUserWithEmailExists(receiverEmail);
+    if (!userExists) {
+      return res
+        .status(400)
+        .json({ error: 'User with this email does not exist' });
+    }
+
     const invitationToken = uuid();
 
     await saveInvitationToken(prodeId, invitationToken, receiverEmail);
