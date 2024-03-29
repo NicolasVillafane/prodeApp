@@ -235,17 +235,16 @@ const ShowProde = () => {
                       Join Prode
                     </Button>
                   )}
-                {data.prode[0]?.author_id === userId &&
-                  !data.prode[0]?.ispublic && (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleInvite}
-                      style={{ marginRight: '8px' }}
-                    >
-                      Invite
-                    </Button>
-                  )}
+                {data.prode[0]?.author_id === userId && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleInvite}
+                    style={{ marginRight: '8px' }}
+                  >
+                    Invite
+                  </Button>
+                )}
                 {data.prode[0]?.author_id === userId && (
                   <Button
                     variant="contained"
