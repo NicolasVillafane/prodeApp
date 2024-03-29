@@ -108,9 +108,10 @@ const ShowProde = () => {
     try {
       const userId = keycloak.tokenParsed?.sub;
       const username = keycloak.tokenParsed?.preferred_username;
+      const email = keycloak.tokenParsed?.email;
 
-      if (!userId || !username) {
-        console.error('User ID or username not available.');
+      if (!userId || !username || !email) {
+        console.error('User ID, username, or email not available.');
         return;
       }
 
@@ -124,7 +125,7 @@ const ShowProde = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId, username }),
+        body: JSON.stringify({ userId, username, email }),
       });
     } catch (error) {
       console.error('Error joining prode:', error);

@@ -90,6 +90,7 @@ const CreateProde = () => {
           isPublic: isPublic,
           authorId: user?.sub,
           authorName: user?.preferred_username,
+          authorEmail: user?.email,
         }),
         headers: { 'content-type': 'application/json' },
       });

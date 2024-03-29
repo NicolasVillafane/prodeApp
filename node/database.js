@@ -36,6 +36,18 @@ const invitationPool = new Pool({
 
 export const saveInvitationToken = async (prodeId, token, receiverEmail) => {
   try {
+    // Check if the user with the given email has already joined the prode
+    const userAlreadyJoined = await checkIfUserAlreadyJoinedProde(
+      prodeId,
+      receiverEmail
+    );
+
+    // If the user has already joined, throw an error or handle it as desired
+    if (userAlreadyJoined) {
+      throw new Error('User has already joined the prode');
+    }
+
+    // If the user has not joined, proceed to save the invitation token
     await invitationPool.query(
       'INSERT INTO invitations (prode_id, token, receiver_email) VALUES ($1, $2, $3)',
       [prodeId, token, receiverEmail]
@@ -136,10 +148,20 @@ export const createProde = (body) => {
       isPublic,
       authorId,
       authorName,
+      authorEmail,
     } = body;
     prodePool.query(
-      'INSERT INTO prodes (id, name, tournamentName, tournamentId, isPublic, author_id, author_name) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [id, name, tournamentName, tournamentId, isPublic, authorId, authorName],
+      'INSERT INTO prodes (id, name, tournamentName, tournamentId, isPublic, author_id, author_name, author_email) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [
+        id,
+        name,
+        tournamentName,
+        tournamentId,
+        isPublic,
+        authorId,
+        authorName,
+        authorEmail,
+      ],
       (error, results) => {
         if (error) {
           reject(error);
@@ -299,11 +321,11 @@ export const getUserById = (userId) => {
   });
 };
 
-export const joinProde = async (prodeId, userId, username) => {
+export const joinProde = async (prodeId, userId, username, userEmail) => {
   try {
     await prodePool.query(
       'UPDATE prodes SET joined_users_info = joined_users_info || $1 WHERE id = $2',
-      [{ id: userId, username: username }, prodeId]
+      [{ id: userId, username: username, email: userEmail }, prodeId]
     );
 
     return { success: true };
@@ -349,6 +371,22 @@ export const getInvitationInfoByToken = (token) => {
   });
 };
 
+export const checkIfUserAlreadyJoinedProde = async (prodeId, userEmail) => {
+  try {
+    const result = await prodePool.query(
+      'SELECT joined_users_info FROM prodes WHERE id = $1',
+      [prodeId]
+    );
+
+    const joinedUsersInfo = result.rows[0]?.joined_users_info || [];
+
+    return joinedUsersInfo.some((user) => user.email === userEmail);
+  } catch (error) {
+    console.error('Error checking if user already joined prode:', error);
+    throw error;
+  }
+};
+
 export default {
   createTournament,
   getTournament,
@@ -366,4 +404,5 @@ export default {
   getPublicProdes,
   getPrivateProdesForUser,
   getInvitationInfoByToken,
+  checkIfUserAlreadyJoinedProde,
 };

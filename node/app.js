@@ -22,6 +22,7 @@ import {
   getPublicProdes,
   getPrivateProdesForUser,
   getInvitationInfoByToken,
+  checkIfUserAlreadyJoinedProde,
 } from './database.js';
 import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
@@ -246,6 +247,7 @@ app.post('/create-prode', async (req, res) => {
       isPublic,
       authorId,
       authorName,
+      authorEmail,
     } = req.body;
 
     const id = uuid();
@@ -259,6 +261,7 @@ app.post('/create-prode', async (req, res) => {
       isPublic,
       authorId,
       authorName,
+      authorEmail,
     });
 
     console.log('Joining author to Prode with ID:', id);
@@ -266,7 +269,7 @@ app.post('/create-prode', async (req, res) => {
     console.log('Author Name:', authorName);
 
     // Join the author to the Prode
-    await joinProde(id, authorId, authorName);
+    await joinProde(id, authorId, authorName, authorEmail);
 
     res.status(200).json(prode);
   } catch (error) {
@@ -285,6 +288,17 @@ app.post('/send-invitation', async (req, res) => {
       return res
         .status(400)
         .json({ error: 'User with this email does not exist' });
+    }
+
+    // Check if the user has already joined the prode
+    const userAlreadyJoined = await checkIfUserAlreadyJoinedProde(
+      prodeId,
+      receiverEmail
+    );
+    if (userAlreadyJoined) {
+      return res
+        .status(400)
+        .json({ error: 'User with this email has already joined the prode' });
     }
 
     const invitationToken = uuid();
@@ -339,9 +353,19 @@ app.post('/confirm-invitation', async (req, res) => {
       return res.status(400).json({ error: 'Invalid token' });
     }
 
-    console.log(prodeId, currentUser.id, currentUser.username);
+    console.log(
+      prodeId,
+      currentUser.id,
+      currentUser.username,
+      currentUser.email
+    );
     // Assuming you have a function to join the prode using prode_id and current user info
-    await joinProde(prodeId, currentUser.id, currentUser.username);
+    await joinProde(
+      prodeId,
+      currentUser.id,
+      currentUser.username,
+      currentUser.email
+    );
 
     res.status(200).json({ message: 'User joined the prode successfully' });
   } catch (error) {
@@ -353,7 +377,7 @@ app.post('/confirm-invitation', async (req, res) => {
 app.post('/p/:id/join', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, username } = req.body;
+    const { userId, username, email } = req.body; // Add email to the request body
 
     const prodeData = await getProde(id);
     if (!prodeData || prodeData.length === 0) {
@@ -366,7 +390,7 @@ app.post('/p/:id/join', async (req, res) => {
       return res.status(403).json({ error: 'Prode is not public' });
     }
 
-    await joinProde(id, userId, username);
+    await joinProde(id, userId, username, email); // Pass email to the joinProde function
 
     res.status(200).json({ message: 'User joined the prode successfully' });
   } catch (error) {
