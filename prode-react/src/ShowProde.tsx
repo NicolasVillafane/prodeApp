@@ -147,6 +147,7 @@ const ShowProde = () => {
           currentDateTime >= matchStartDate - 30 * 60 * 1000;
         const formattedHour = dateObject.getUTCHours();
         const formattedMinutes = dateObject.getUTCMinutes();
+        const isMatchFinished = match.status === 'FINISHED';
 
         return (
           <div key={match.id}>
@@ -160,12 +161,17 @@ const ShowProde = () => {
                   {formattedMinutes < 10
                     ? `0${formattedMinutes}`
                     : formattedMinutes}{' '}
-                  |{' '}
+                  | {match.homeTeam.name} VS {match.awayTeam.name} |{' '}
+                  {match.score.fullTime.homeTeam} -{' '}
+                  {match.score.fullTime.awayTeam} |{' '}
+                  {match.status !== 'SCHEDULED' ? match.status : ''}
+                  {(isMatchFinished || isMatchLocked) && (
+                    <span style={{ color: 'red', marginLeft: '8px' }}>
+                      Closed
+                    </span>
+                  )}
                 </>
               )}
-              {match.homeTeam.name} VS {match.awayTeam.name} |{' '}
-              {match.score.fullTime.homeTeam} - {match.score.fullTime.awayTeam}{' '}
-              | {match.status !== 'SCHEDULED' ? match.status : ''}
             </Typography>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Checkbox
