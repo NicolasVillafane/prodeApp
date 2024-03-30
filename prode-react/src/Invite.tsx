@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 import { Alert } from '@mui/material';
 import Appbar from './Appbar';
-import keycloak from './Keycloak';
 
 const validationSchema = yup.object({
   receiverEmail: yup
@@ -107,7 +106,7 @@ const Invite = () => {
                     fullWidth
                     id="receiverEmail"
                     name="receiverEmail"
-                    label="Recipient Email"
+                    label="Write an Email"
                     variant="outlined"
                     value={formik.values.receiverEmail}
                     onChange={formik.handleChange}
