@@ -34,6 +34,14 @@ const invitationPool = new Pool({
   database: 'prodeapp',
 });
 
+const predictionPool = new Pool({
+  host: 'localhost',
+  user: 'postgres',
+  port: 5432,
+  password: 'postgres',
+  database: 'prodeapp',
+});
+
 export const saveInvitationToken = async (prodeId, token, receiverEmail) => {
   try {
     // Check if the user with the given email has already joined the prode
@@ -387,6 +395,70 @@ export const checkIfUserAlreadyJoinedProde = async (prodeId, userEmail) => {
   }
 };
 
+// export const savePredictionToDatabase = async (
+//   id,
+//   user_id,
+//   prode_id,
+//   match_id,
+//   predicted_result
+// ) => {
+//   try {
+//     // Stringify the predicted_result object before saving to the database
+//     const predictedResultString = JSON.stringify(predicted_result);
+
+//     const query =
+//       'INSERT INTO predictions (id, user_id, prode_id, match_id, predicted_result) VALUES ($1, $2, $3, $4, $5)';
+//     const values = [id, user_id, prode_id, match_id, predictedResultString];
+//     await predictionPool.query(query, values);
+//   } catch (error) {
+//     console.error('Error saving prediction to database:', error);
+//     throw error;
+//   }
+// };
+
+export const savePredictionToDatabase = async (
+  id,
+  user_id,
+  prode_id,
+  match_id,
+  predicted_result
+) => {
+  try {
+    // Check if the user has already made a prediction for the given match
+    const existingPrediction = await getPredictionByUserAndMatch(
+      user_id,
+      match_id
+    );
+    if (existingPrediction) {
+      throw new Error('User has already made a prediction for this match');
+    }
+
+    // Stringify the predicted_result object before saving to the database
+    const predictedResultString = JSON.stringify(predicted_result);
+
+    const query =
+      'INSERT INTO predictions (id, user_id, prode_id, match_id, predicted_result) VALUES ($1, $2, $3, $4, $5)';
+    const values = [id, user_id, prode_id, match_id, predictedResultString];
+    await predictionPool.query(query, values);
+  } catch (error) {
+    console.error('Error saving prediction to database:', error);
+    throw error;
+  }
+};
+
+// Function to get prediction by user and match
+const getPredictionByUserAndMatch = async (user_id, match_id) => {
+  try {
+    const query =
+      'SELECT * FROM predictions WHERE user_id = $1 AND match_id = $2';
+    const { rows } = await predictionPool.query(query, [user_id, match_id]);
+    return rows[0]; // Return the first prediction if found, or undefined
+  } catch (error) {
+    console.error('Error fetching prediction:', error);
+    throw error;
+  }
+};
+
 export default {
   createTournament,
   getTournament,
@@ -405,4 +477,5 @@ export default {
   getPrivateProdesForUser,
   getInvitationInfoByToken,
   checkIfUserAlreadyJoinedProde,
+  savePredictionToDatabase,
 };

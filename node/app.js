@@ -23,6 +23,7 @@ import {
   getPrivateProdesForUser,
   getInvitationInfoByToken,
   checkIfUserAlreadyJoinedProde,
+  savePredictionToDatabase,
 } from './database.js';
 import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
@@ -122,6 +123,8 @@ app.get('/p/:id', async (req, res) => {
       isAuthor: isAuthor,
     };
 
+    console.log(responseData.football[0].id);
+
     res.status(200).json(responseData);
   } catch (error) {
     console.error('Error:', error);
@@ -200,6 +203,36 @@ app.get('/create-prode', (req, res) => {
     .catch((error) => {
       res.status(500).send(error);
     });
+});
+
+app.post('/p/:id', async (req, res) => {
+  try {
+    const { match_id, predicted_result, user_id, prode_id } = req.body;
+
+    // Validate if the required fields are present
+    if (!match_id || !predicted_result || !user_id || !prode_id) {
+      return res.status(400).json({
+        error: 'Match ID, predicted result, user ID, and prode ID are required',
+      });
+    }
+
+    const id = uuid();
+
+    // Save the prediction to the database
+    await savePredictionToDatabase(
+      id,
+      user_id,
+      prode_id,
+      match_id,
+      predicted_result
+    );
+
+    // Send a success response
+    res.status(200).json({ message: 'Prediction submitted successfully' });
+  } catch (error) {
+    console.error('Error submitting prediction:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.post('/keycloak-events', (req, res) => {

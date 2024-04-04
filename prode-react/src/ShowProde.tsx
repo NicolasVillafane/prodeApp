@@ -132,6 +132,39 @@ const ShowProde = () => {
     }
   };
 
+  const handleSubmitPrediction = async (
+    matchId: string,
+    predictedResult: string
+  ) => {
+    console.log('Submitting prediction...');
+    console.log('User ID:', userId);
+    console.log('Prode ID:', id);
+    console.log('Match ID:', matchId);
+    console.log('Predicted Result:', predictedResult);
+
+    try {
+      const response = await fetch(`/p/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          prode_id: id,
+          match_id: matchId,
+          predicted_result: predictedResult,
+        }),
+      });
+      if (response.ok) {
+        // Handle successful prediction submission (if needed)
+      } else {
+        console.error('Failed to submit prediction');
+      }
+    } catch (error) {
+      console.error('Error submitting prediction:', error);
+    }
+  };
+
   const matches = data.football
     ? data.football.map((match) => {
         const dateObject = new Date(match.utcDate);
@@ -188,6 +221,19 @@ const ShowProde = () => {
                 style={{ filter: isMatchLocked ? 'grayscale(100%)' : 'none' }}
               />
               <label>{match.awayTeam.name}</label>
+              <Button
+                disabled={!selectedWinner || isMatchLocked || isMatchFinished}
+                onClick={() =>
+                  handleSubmitPrediction(
+                    match.id,
+                    selectedWinner === match.homeTeam.name
+                      ? 'homeTeam'
+                      : 'awayTeam'
+                  )
+                }
+              >
+                Submit Prediction
+              </Button>
             </div>
           </div>
         );
