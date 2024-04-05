@@ -24,6 +24,7 @@ import {
   getInvitationInfoByToken,
   checkIfUserAlreadyJoinedProde,
   savePredictionToDatabase,
+  getPredictionForMatch,
 } from './database.js';
 import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
@@ -88,42 +89,74 @@ app.get('/p/:id', async (req, res) => {
     const userId = req.query.userId;
     let prodeData = await getProde(id);
     const isAuthor = prodeData[0].author_id === userId;
-    console.log('params: ', req.query);
 
-    let footballData = {};
-
+    // Fetch football match data
     const fd = new FootballDataApi(footballDataApiKey);
-
     const competitionInfo = await fd.getCompetition(
       parseInt(prodeData[0].tournamentid)
     );
     let currentMatchday = competitionInfo.currentSeason.currentMatchday;
 
-    footballData = await fd.getCompetitionMatchesMatchday(
+    let footballData = await fd.getCompetitionMatchesMatchday(
       parseInt(prodeData[0].tournamentid),
       currentMatchday
     );
+
+    // Initialize flag to check prediction correctness only once per matchday
+    let checkedPredictionCorrectness = false;
 
     let allMatchesFinished = footballData.matches.every(
       (match) => match.status === 'FINISHED'
     );
 
+    // If all matches for the current matchday are finished, move to the next matchday
     if (allMatchesFinished) {
       currentMatchday++;
       footballData = await fd.getCompetitionMatchesMatchday(
         parseInt(prodeData[0].tournamentid),
         currentMatchday
       );
+
+      // Reset the flag for the new matchday
+      checkedPredictionCorrectness = false;
+    }
+
+    // Iterate through matches and compare predictions
+    const matchesWithPredictions = [];
+    for (const match of footballData.matches) {
+      const matchWinner = match.score.winner;
+      let isPredictionCorrect = null;
+
+      // Only check prediction correctness if match status is "FINISHED" and not checked before for this matchday
+      if (!checkedPredictionCorrectness && match.status === 'FINISHED') {
+        const prediction = await getPredictionForMatch(userId, match.id, id);
+        const predictionResult = prediction
+          ? prediction.predicted_result
+          : null;
+        // Push the user's prediction directly
+        matchesWithPredictions.push({
+          match,
+          prediction: predictionResult,
+          isPredictionCorrect: predictionResult === matchWinner,
+        });
+        // Set the flag to true once prediction correctness is checked for this matchday
+        checkedPredictionCorrectness = true;
+      } else {
+        // If prediction is not checked or match is not finished, push null
+        matchesWithPredictions.push({
+          match,
+          prediction: null,
+          isPredictionCorrect: null, // Since prediction is not checked, correctness is null
+        });
+      }
     }
 
     const responseData = {
       prode: prodeData,
-      football: footballData.matches,
-      currentMatchday: currentMatchday,
-      isAuthor: isAuthor,
+      football: matchesWithPredictions,
+      currentMatchday,
+      isAuthor,
     };
-
-    console.log(responseData.football[0].id);
 
     res.status(200).json(responseData);
   } catch (error) {

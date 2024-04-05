@@ -12,23 +12,28 @@ import {
 } from '@mui/material';
 import Appbar from './Appbar';
 import keycloak from './Keycloak';
+import { ConditionalExpression } from 'typescript';
 
 interface Match {
-  id: string;
-  utcDate: string;
-  status: string;
-  homeTeam: {
-    name: string;
-  };
-  awayTeam: {
-    name: string;
-  };
-  score: {
-    fullTime: {
-      homeTeam: number;
-      awayTeam: number;
+  match: {
+    id: string;
+    utcDate: string;
+    status: string;
+    homeTeam: {
+      name: string;
+    };
+    awayTeam: {
+      name: string;
+    };
+    score: {
+      fullTime: {
+        homeTeam: number;
+        awayTeam: number;
+      };
     };
   };
+  prediction: string;
+  isPredictionCorrect: boolean;
 }
 
 interface Prode {
@@ -167,7 +172,8 @@ const ShowProde = () => {
 
   const matches = data.football
     ? data.football.map((match) => {
-        const dateObject = new Date(match.utcDate);
+        if (!match) return null; // Null check for the match object
+        const dateObject = new Date(match.match.utcDate);
         const day = dateObject.getDate();
         const formattedDay = day < 10 ? `0${day}` : day;
         const month = dateObject.getMonth() + 1;
@@ -176,17 +182,18 @@ const ShowProde = () => {
         const matchStartDate = dateObject.getTime();
         const currentDateTime = new Date().getTime();
         const isMatchLocked =
-          match.status !== 'POSTPONED' &&
+          match.match.status !== 'POSTPONED' &&
           currentDateTime >= matchStartDate - 30 * 60 * 1000;
         const formattedHour = dateObject.getUTCHours();
         const formattedMinutes = dateObject.getUTCMinutes();
-        const isMatchFinished = match.status === 'FINISHED';
+        const isMatchFinished = match.match.status === 'FINISHED';
+        console.log(match.prediction);
 
         return (
-          <div key={match.id}>
+          <div key={match.match.id}>
             <Typography variant="h6" style={{ borderBottom: '1px solid #000' }}>
               {formattedDate} |{' '}
-              {match.status === 'POSTPONED' ? (
+              {match.match.status === 'POSTPONED' ? (
                 ''
               ) : (
                 <>
@@ -194,10 +201,10 @@ const ShowProde = () => {
                   {formattedMinutes < 10
                     ? `0${formattedMinutes}`
                     : formattedMinutes}{' '}
-                  | {match.homeTeam.name} VS {match.awayTeam.name} |{' '}
-                  {match.score.fullTime.homeTeam} -{' '}
-                  {match.score.fullTime.awayTeam} |{' '}
-                  {match.status !== 'SCHEDULED' ? match.status : ''}
+                  | {match.match.homeTeam?.name} VS {match.match.awayTeam?.name}{' '}
+                  | {match.match.score?.fullTime.homeTeam} -{' '}
+                  {match.match.score?.fullTime.awayTeam} |{' '}
+                  {match.match.status !== 'SCHEDULED' ? match.match.status : ''}
                   {(isMatchFinished || isMatchLocked) && (
                     <span style={{ color: 'red', marginLeft: '8px' }}>
                       Closed
@@ -209,26 +216,30 @@ const ShowProde = () => {
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Checkbox
                 disabled={isMatchLocked}
-                checked={selectedWinner === match.homeTeam.name}
-                onChange={() => handleCheckboxChange(match.homeTeam.name)}
+                checked={selectedWinner === match.match.homeTeam?.name}
+                onChange={() =>
+                  handleCheckboxChange(match.match.homeTeam?.name)
+                }
                 style={{ filter: isMatchLocked ? 'grayscale(100%)' : 'none' }}
               />
-              <label>{match.homeTeam.name}</label>
+              <label>{match.match.homeTeam?.name}</label>
               <Checkbox
                 disabled={isMatchLocked}
-                checked={selectedWinner === match.awayTeam.name}
-                onChange={() => handleCheckboxChange(match.awayTeam.name)}
+                checked={selectedWinner === match.match.awayTeam?.name}
+                onChange={() =>
+                  handleCheckboxChange(match.match.awayTeam?.name)
+                }
                 style={{ filter: isMatchLocked ? 'grayscale(100%)' : 'none' }}
               />
-              <label>{match.awayTeam.name}</label>
+              <label>{match.match.awayTeam?.name}</label>
               <Button
                 disabled={!selectedWinner || isMatchLocked || isMatchFinished}
                 onClick={() =>
                   handleSubmitPrediction(
-                    match.id,
-                    selectedWinner === match.homeTeam.name
-                      ? 'homeTeam'
-                      : 'awayTeam'
+                    match.match.id,
+                    selectedWinner === match.match.homeTeam?.name
+                      ? 'HOME_TEAM'
+                      : 'AWAY_TEAM'
                   )
                 }
               >

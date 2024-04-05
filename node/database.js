@@ -459,6 +459,20 @@ const getPredictionByUserAndMatch = async (user_id, match_id) => {
   }
 };
 
+export const getPredictionForMatch = async (userId, matchId, prodeId) => {
+  // Implement this function to fetch prediction from the database
+  try {
+    const result = await predictionPool.query(
+      'SELECT * FROM predictions WHERE user_id = $1 AND match_id = $2 AND prode_id = $3',
+      [userId, matchId, prodeId]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error fetching prediction:', error);
+    throw error;
+  }
+};
+
 export default {
   createTournament,
   getTournament,
@@ -478,4 +492,5 @@ export default {
   getInvitationInfoByToken,
   checkIfUserAlreadyJoinedProde,
   savePredictionToDatabase,
+  getPredictionForMatch,
 };
