@@ -102,51 +102,37 @@ app.get('/p/:id', async (req, res) => {
       currentMatchday
     );
 
-    // Initialize flag to check prediction correctness only once per matchday
-    let checkedPredictionCorrectness = false;
-
-    let allMatchesFinished = footballData.matches.every(
-      (match) => match.status === 'FINISHED'
-    );
-
-    // If all matches for the current matchday are finished, move to the next matchday
-    if (allMatchesFinished) {
-      currentMatchday++;
-      footballData = await fd.getCompetitionMatchesMatchday(
-        parseInt(prodeData[0].tournamentid),
-        currentMatchday
-      );
-
-      // Reset the flag for the new matchday
-      checkedPredictionCorrectness = false;
-    }
-
     // Iterate through matches and compare predictions
     const matchesWithPredictions = [];
     for (const match of footballData.matches) {
       const matchWinner = match.score.winner;
       let isPredictionCorrect = null;
+      // Initialize flag to check prediction correctness only once for this match
+      let checkedPredictionCorrectness = false;
 
-      // Only check prediction correctness if match status is "FINISHED" and not checked before for this matchday
-      if (!checkedPredictionCorrectness && match.status === 'FINISHED') {
-        const prediction = await getPredictionForMatch(userId, match.id, id);
-        const predictionResult = prediction
-          ? prediction.predicted_result
-          : null;
-        // Push the user's prediction directly
+      // Get prediction for the current match
+      const prediction = await getPredictionForMatch(userId, match.id, id);
+      const predictionResult = prediction ? prediction.predicted_result : null;
+
+      // Only check prediction correctness if match status is "FINISHED"
+      if (match.status === 'FINISHED') {
+        // Only check prediction correctness if not checked before for this match
+        if (!checkedPredictionCorrectness) {
+          // Push the user's prediction directly
+          matchesWithPredictions.push({
+            match,
+            prediction: predictionResult,
+            isPredictionCorrect: predictionResult === matchWinner,
+          });
+          // Set the flag to true once prediction correctness is checked for this match
+          checkedPredictionCorrectness = true;
+        }
+      } else {
+        // If match is not finished, still push prediction and correctness
         matchesWithPredictions.push({
           match,
           prediction: predictionResult,
-          isPredictionCorrect: predictionResult === matchWinner,
-        });
-        // Set the flag to true once prediction correctness is checked for this matchday
-        checkedPredictionCorrectness = true;
-      } else {
-        // If prediction is not checked or match is not finished, push null
-        matchesWithPredictions.push({
-          match,
-          prediction: null,
-          isPredictionCorrect: null, // Since prediction is not checked, correctness is null
+          isPredictionCorrect: null, // Prediction correctness is null when match is not finished
         });
       }
     }
