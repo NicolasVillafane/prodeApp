@@ -187,7 +187,7 @@ const ShowProde = () => {
         const formattedHour = dateObject.getUTCHours();
         const formattedMinutes = dateObject.getUTCMinutes();
         const isMatchFinished = match.match.status === 'FINISHED';
-        console.log(match);
+        console.log(data);
 
         return (
           <div key={match.match.id}>

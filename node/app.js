@@ -25,6 +25,8 @@ import {
   checkIfUserAlreadyJoinedProde,
   savePredictionToDatabase,
   getPredictionForMatch,
+  updateUserPointsForProde,
+  markPointsAsAwarded,
 } from './database.js';
 import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
@@ -107,25 +109,40 @@ app.get('/p/:id', async (req, res) => {
     for (const match of footballData.matches) {
       const matchWinner = match.score.winner;
       let isPredictionCorrect = null;
-      // Initialize flag to check prediction correctness only once for this match
-      let checkedPredictionCorrectness = false;
 
       // Get prediction for the current match
       const prediction = await getPredictionForMatch(userId, match.id, id);
       const predictionResult = prediction ? prediction.predicted_result : null;
 
-      // Only check prediction correctness if match status is "FINISHED"
+      // Only award points if the prediction is correct and points have not been awarded yet
       if (match.status === 'FINISHED') {
-        // Only check prediction correctness if not checked before for this match
-        if (!checkedPredictionCorrectness) {
+        if (prediction && !prediction.points_awarded) {
           // Push the user's prediction directly
           matchesWithPredictions.push({
             match,
             prediction: predictionResult,
             isPredictionCorrect: predictionResult === matchWinner,
           });
-          // Set the flag to true once prediction correctness is checked for this match
-          checkedPredictionCorrectness = true;
+          // Update user's points for the current prode if the prediction is correct
+          if (predictionResult === matchWinner) {
+            console.log(
+              `Awarding points to user ${userId} for correct prediction in match ${match.id}`
+            );
+            await updateUserPointsForProde(userId, id, 3); // Assuming 3 points are awarded for a correct prediction
+            // Mark the points as awarded for this prediction
+            await markPointsAsAwarded(prediction.id);
+            console.log(`Points awarded for prediction ${prediction.id}`);
+          }
+        } else {
+          // If points have already been awarded for this match, set isPredictionCorrect to null
+          console.log(
+            `Prediction for match ${match.id} already awarded or not found`
+          );
+          matchesWithPredictions.push({
+            match,
+            prediction: predictionResult,
+            isPredictionCorrect: null,
+          });
         }
       } else {
         // If match is not finished, still push prediction and correctness

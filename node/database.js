@@ -482,6 +482,36 @@ export const getPredictionForMatch = async (userId, matchId, prodeId) => {
   }
 };
 
+export const updateUserPointsForProde = async (
+  userId,
+  prodeId,
+  pointsToAdd
+) => {
+  try {
+    // Increment user's points for the current prode by the specified amount
+    await predictionPool.query(
+      'INSERT INTO prode_points (user_id, prode_id, points) VALUES ($1, $2, $3) ON CONFLICT (user_id, prode_id) DO UPDATE SET points = prode_points.points + $3',
+      [userId, prodeId, pointsToAdd]
+    );
+  } catch (error) {
+    console.error('Error updating user points for prode:', error);
+    throw error;
+  }
+};
+
+export const markPointsAsAwarded = async (predictionId) => {
+  try {
+    // Perform an SQL UPDATE statement to mark points as awarded for the specified prediction
+    await predictionPool.query(
+      'UPDATE predictions SET points_awarded = TRUE WHERE id = $1',
+      [predictionId]
+    );
+  } catch (error) {
+    console.error('Error marking points as awarded:', error);
+    throw error;
+  }
+};
+
 export default {
   createTournament,
   getTournament,
@@ -502,4 +532,6 @@ export default {
   checkIfUserAlreadyJoinedProde,
   savePredictionToDatabase,
   getPredictionForMatch,
+  updateUserPointsForProde,
+  markPointsAsAwarded,
 };
