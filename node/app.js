@@ -27,6 +27,7 @@ import {
   getPredictionForMatch,
   updateUserPointsForProde,
   markPointsAsAwarded,
+  getPointsForProde,
 } from './database.js';
 import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
@@ -166,11 +167,14 @@ app.get('/p/:id', async (req, res) => {
       }
     }
 
+    const prodePoints = await getPointsForProde(id);
+
     const responseData = {
       prode: prodeData,
       football: matchesWithPredictions,
       currentMatchday,
       isAuthor,
+      prodePoints: prodePoints,
     };
 
     res.status(200).json(responseData);

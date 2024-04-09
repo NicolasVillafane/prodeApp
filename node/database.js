@@ -512,6 +512,19 @@ export const markPointsAsAwarded = async (predictionId) => {
   }
 };
 
+export const getPointsForProde = async (prodeId) => {
+  try {
+    const result = await predictionPool.query(
+      'SELECT * FROM prode_points WHERE prode_id = $1',
+      [prodeId]
+    );
+    return result.rows; // Return the rows directly
+  } catch (error) {
+    console.error('Error fetching points for prode:', error);
+    throw error;
+  }
+};
+
 export default {
   createTournament,
   getTournament,
@@ -534,4 +547,5 @@ export default {
   getPredictionForMatch,
   updateUserPointsForProde,
   markPointsAsAwarded,
+  getPointsForProde,
 };

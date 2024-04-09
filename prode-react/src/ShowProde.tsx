@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import Appbar from './Appbar';
 import keycloak from './Keycloak';
-import { ConditionalExpression } from 'typescript';
 
 interface Match {
   match: {
@@ -45,10 +44,18 @@ interface Prode {
   joined_users_info: { id: string; username: string }[];
 }
 
+interface ProdePoints {
+  id: number;
+  user_id: string;
+  prode_id: string;
+  points: number;
+}
+
 interface Data {
   prode: Prode[];
   football?: Match[];
   currentMatchday?: number;
+  prodePoints?: ProdePoints[];
 }
 
 const ShowProde = () => {
@@ -97,12 +104,10 @@ const ShowProde = () => {
   };
 
   const handleCheckboxChange = (team: string, matchId: string) => {
-    // Check if the prediction for the match already exists
     const predictionExists = data.football?.find(
       (match) => match.match.id === matchId && match.prediction !== null
     );
 
-    // If the prediction exists, do not update the selectedWinner state
     if (!predictionExists) {
       setSelectedWinner((prevSelected) => ({
         ...prevSelected,
@@ -183,9 +188,32 @@ const ShowProde = () => {
     }
   };
 
+  const userPoints: { [key: string]: number } = {};
+
+  data.prodePoints?.forEach((point) => {
+    userPoints[point.user_id] = point.points;
+  });
+
+  const joinedUsersWithPoints = data.prode[0]?.joined_users_info.map(
+    (user, index) => (
+      <ListItem key={index}>
+        <ListItemText>
+          <Typography variant="h6">
+            {`${index + 1}. ${user.username}`}
+            {userPoints[user.id] !== undefined && (
+              <span style={{ marginLeft: '8px' }}>
+                Points: {userPoints[user.id]}
+              </span>
+            )}
+          </Typography>
+        </ListItemText>
+      </ListItem>
+    )
+  );
+
   const matches = data.football
     ? data.football.map((match) => {
-        if (!match) return null; // Null check for the match object
+        if (!match) return null;
         const dateObject = new Date(match.match.utcDate);
         const day = dateObject.getDate();
         const formattedDay = day < 10 ? `0${day}` : day;
@@ -200,7 +228,6 @@ const ShowProde = () => {
         const formattedHour = (dateObject.getUTCHours() - 3 + 24) % 24;
         const formattedMinutes = dateObject.getUTCMinutes();
         const isMatchFinished = match.match.status === 'FINISHED';
-        console.log(match.prediction);
 
         return (
           <div key={match.match.id}>
@@ -373,18 +400,8 @@ const ShowProde = () => {
               Leaderboards
             </Typography>
             <div>
-              {joinedUsers.length > 0 ? (
-                <List component="ol">
-                  {joinedUsers.map((user, index) => (
-                    <ListItem key={index}>
-                      <ListItemText>
-                        <Typography variant="h6">
-                          {`${index + 1}. ${user.props.children}`}
-                        </Typography>
-                      </ListItemText>
-                    </ListItem>
-                  ))}
-                </List>
+              {joinedUsersWithPoints && joinedUsersWithPoints.length > 0 ? (
+                <List component="ol">{joinedUsersWithPoints}</List>
               ) : (
                 <Typography variant="body1">
                   No users have joined yet!
