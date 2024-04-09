@@ -55,9 +55,12 @@ const ShowProde = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState<Data>({ prode: [] });
-  const [selectedWinner, setSelectedWinner] = useState<string | null>(null);
+  // const [selectedWinner, setSelectedWinner] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [joinedUsers, setJoinedUsers] = useState<JSX.Element[]>([]);
+  const [selectedWinner, setSelectedWinner] = useState<{
+    [key: string]: string | null;
+  }>({});
 
   useEffect(() => {
     const userId = keycloak.subject || null;
@@ -94,8 +97,11 @@ const ShowProde = () => {
     }
   };
 
-  const handleCheckboxChange = (team: string) => {
-    setSelectedWinner(team);
+  const handleCheckboxChange = (team: string, matchId: string) => {
+    setSelectedWinner((prevSelected) => ({
+      ...prevSelected,
+      [matchId]: team,
+    }));
   };
 
   const handleDeleteProde = async () => {
@@ -187,57 +193,66 @@ const ShowProde = () => {
         const formattedHour = dateObject.getUTCHours();
         const formattedMinutes = dateObject.getUTCMinutes();
         const isMatchFinished = match.match.status === 'FINISHED';
-        console.log(data);
 
         return (
           <div key={match.match.id}>
             <Typography variant="h6" style={{ borderBottom: '1px solid #000' }}>
               {formattedDate} |{' '}
-              {match.match.status === 'POSTPONED' ? (
-                ''
-              ) : (
-                <>
-                  {formattedHour < 10 ? `0${formattedHour}` : formattedHour}:
-                  {formattedMinutes < 10
-                    ? `0${formattedMinutes}`
-                    : formattedMinutes}{' '}
-                  | {match.match.homeTeam?.name} VS {match.match.awayTeam?.name}{' '}
-                  | {match.match.score?.fullTime.homeTeam} -{' '}
-                  {match.match.score?.fullTime.awayTeam} |{' '}
-                  {match.match.status !== 'SCHEDULED' ? match.match.status : ''}
-                  {(isMatchFinished || isMatchLocked) && (
-                    <span style={{ color: 'red', marginLeft: '8px' }}>
-                      Closed
-                    </span>
-                  )}
-                </>
+              {formattedHour < 10 ? `0${formattedHour}` : formattedHour}:
+              {formattedMinutes < 10
+                ? `0${formattedMinutes}`
+                : formattedMinutes}{' '}
+              | {match.match.homeTeam?.name}{' '}
+              {match.match.score?.fullTime.homeTeam} -{' '}
+              {match.match.score?.fullTime.awayTeam}{' '}
+              {match.match.awayTeam?.name} |{' '}
+              {match.match.status !== 'SCHEDULED' ? match.match.status : ''}
+              {(isMatchFinished || isMatchLocked) && (
+                <span style={{ color: 'red', marginLeft: '8px' }}>Closed</span>
               )}
             </Typography>
+
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Checkbox
                 disabled={isMatchLocked}
-                checked={selectedWinner === match.match.homeTeam?.name}
+                checked={
+                  selectedWinner[match.match.id] === match.match.homeTeam?.name
+                }
                 onChange={() =>
-                  handleCheckboxChange(match.match.homeTeam?.name)
+                  handleCheckboxChange(
+                    match.match.homeTeam?.name,
+                    match.match.id
+                  )
                 }
                 style={{ filter: isMatchLocked ? 'grayscale(100%)' : 'none' }}
               />
               <label>{match.match.homeTeam?.name}</label>
               <Checkbox
                 disabled={isMatchLocked}
-                checked={selectedWinner === match.match.awayTeam?.name}
+                checked={
+                  selectedWinner[match.match.id] === match.match.awayTeam?.name
+                }
                 onChange={() =>
-                  handleCheckboxChange(match.match.awayTeam?.name)
+                  handleCheckboxChange(
+                    match.match.awayTeam?.name,
+                    match.match.id
+                  )
                 }
                 style={{ filter: isMatchLocked ? 'grayscale(100%)' : 'none' }}
               />
               <label>{match.match.awayTeam?.name}</label>
               <Button
-                disabled={!selectedWinner || isMatchLocked || isMatchFinished}
+                key={match.match.id}
+                disabled={
+                  !selectedWinner[match.match.id] ||
+                  isMatchLocked ||
+                  isMatchFinished
+                }
                 onClick={() =>
                   handleSubmitPrediction(
                     match.match.id,
-                    selectedWinner === match.match.homeTeam?.name
+                    selectedWinner[match.match.id] ===
+                      match.match.homeTeam?.name
                       ? 'HOME_TEAM'
                       : 'AWAY_TEAM'
                   )
@@ -322,57 +337,43 @@ const ShowProde = () => {
             </Grid>
           )}
         </Grid>
-        <Grid
-          container
-          rowSpacing={1}
-          columnSpacing={{ xs: 1, sm: 2, md: 3 }}
-          textAlign="center"
-        >
-          <Grid item xs={6}>
-            <Typography variant="h3" style={{ borderRight: '1px solid #000' }}>
+        <Grid container direction="column">
+          <Grid item xs={12}>
+            <Typography variant="h3" style={{ textAlign: 'center' }}>
               Matchday {data.currentMatchday} Fixtures
             </Typography>
+            <div>
+              {matches.length > 0 ? (
+                <Container>{matches}</Container>
+              ) : (
+                <Typography variant="h5">No Matches!</Typography>
+              )}
+            </div>
           </Grid>
-          <Grid item xs={6}>
-            <Typography variant="h3">Leaderboards</Typography>
+          <Grid item xs={12}>
+            <Typography variant="h3" style={{ textAlign: 'center' }}>
+              Leaderboards
+            </Typography>
+            <div>
+              {joinedUsers.length > 0 ? (
+                <List component="ol">
+                  {joinedUsers.map((user, index) => (
+                    <ListItem key={index}>
+                      <ListItemText>
+                        <Typography variant="h6">
+                          {`${index + 1}. ${user.props.children}`}
+                        </Typography>
+                      </ListItemText>
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Typography variant="body1">
+                  No users have joined yet!
+                </Typography>
+              )}
+            </div>
           </Grid>
-          {data.prode[0]?.joined_users_info.find(
-            (user) => user.id === userId
-          ) && (
-            <>
-              <Grid
-                item
-                xs={6}
-                textAlign="left"
-                style={{ borderRight: '1px solid #000' }}
-              >
-                {matches.length > 0 ? (
-                  <Container>{matches}</Container>
-                ) : (
-                  <Typography variant="h5">No Matches!</Typography>
-                )}
-              </Grid>
-              <Grid item xs={6} textAlign="left">
-                {joinedUsers.length > 0 ? (
-                  <List component="ol">
-                    {joinedUsers.map((user, index) => (
-                      <ListItem key={index}>
-                        <ListItemText>
-                          <Typography variant="h6">
-                            {`${index + 1}. ${user.props.children}`}
-                          </Typography>
-                        </ListItemText>
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography variant="body1">
-                    No users have joined yet!
-                  </Typography>
-                )}
-              </Grid>
-            </>
-          )}
         </Grid>
       </Container>
     </div>

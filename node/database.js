@@ -462,19 +462,19 @@ const getPredictionByUserAndMatch = async (user_id, match_id) => {
 export const getPredictionForMatch = async (userId, matchId, prodeId) => {
   // Implement this function to fetch prediction from the database
   try {
-    console.log(
-      'Fetching prediction for userId:',
-      userId,
-      'matchId:',
-      matchId,
-      'prodeId:',
-      prodeId
-    );
+    // console.log(
+    //   'Fetching prediction for userId:',
+    //   userId,
+    //   'matchId:',
+    //   matchId,
+    //   'prodeId:',
+    //   prodeId
+    // );
     const result = await predictionPool.query(
       'SELECT * FROM predictions WHERE user_id = $1 AND match_id = $2 AND prode_id = $3',
       [userId, matchId, prodeId]
     );
-    console.log('Fetched prediction:', result.rows[0]);
+    // console.log('Fetched prediction:', result.rows[0]);
     return result.rows[0];
   } catch (error) {
     console.error('Error fetching prediction:', error);

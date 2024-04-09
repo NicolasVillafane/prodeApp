@@ -104,6 +104,18 @@ app.get('/p/:id', async (req, res) => {
       currentMatchday
     );
 
+    let allMatchesFinished = footballData.matches.every(
+      (match) => match.status === 'FINISHED'
+    );
+    console.log('are matches finished: ' + allMatchesFinished);
+    if (allMatchesFinished) {
+      currentMatchday++;
+      footballData = await fd.getCompetitionMatchesMatchday(
+        parseInt(prodeData[0].tournamentid),
+        currentMatchday
+      );
+    }
+
     // Iterate through matches and compare predictions
     const matchesWithPredictions = [];
     for (const match of footballData.matches) {
@@ -125,19 +137,19 @@ app.get('/p/:id', async (req, res) => {
           });
           // Update user's points for the current prode if the prediction is correct
           if (predictionResult === matchWinner) {
-            console.log(
-              `Awarding points to user ${userId} for correct prediction in match ${match.id}`
-            );
+            // console.log(
+            //   `Awarding points to user ${userId} for correct prediction in match ${match.id}`
+            // );
             await updateUserPointsForProde(userId, id, 3); // Assuming 3 points are awarded for a correct prediction
             // Mark the points as awarded for this prediction
             await markPointsAsAwarded(prediction.id);
-            console.log(`Points awarded for prediction ${prediction.id}`);
+            // console.log(`Points awarded for prediction ${prediction.id}`);
           }
         } else {
           // If points have already been awarded for this match, set isPredictionCorrect to null
-          console.log(
-            `Prediction for match ${match.id} already awarded or not found`
-          );
+          // console.log(
+          //   `Prediction for match ${match.id} already awarded or not found`
+          // );
           matchesWithPredictions.push({
             match,
             prediction: predictionResult,
