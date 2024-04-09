@@ -55,7 +55,6 @@ const ShowProde = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState<Data>({ prode: [] });
-  // const [selectedWinner, setSelectedWinner] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [joinedUsers, setJoinedUsers] = useState<JSX.Element[]>([]);
   const [selectedWinner, setSelectedWinner] = useState<{
@@ -98,10 +97,18 @@ const ShowProde = () => {
   };
 
   const handleCheckboxChange = (team: string, matchId: string) => {
-    setSelectedWinner((prevSelected) => ({
-      ...prevSelected,
-      [matchId]: team,
-    }));
+    // Check if the prediction for the match already exists
+    const predictionExists = data.football?.find(
+      (match) => match.match.id === matchId && match.prediction !== null
+    );
+
+    // If the prediction exists, do not update the selectedWinner state
+    if (!predictionExists) {
+      setSelectedWinner((prevSelected) => ({
+        ...prevSelected,
+        [matchId]: team,
+      }));
+    }
   };
 
   const handleDeleteProde = async () => {
@@ -190,9 +197,10 @@ const ShowProde = () => {
         const isMatchLocked =
           match.match.status !== 'POSTPONED' &&
           currentDateTime >= matchStartDate - 30 * 60 * 1000;
-        const formattedHour = dateObject.getUTCHours();
+        const formattedHour = (dateObject.getUTCHours() - 3 + 24) % 24;
         const formattedMinutes = dateObject.getUTCMinutes();
         const isMatchFinished = match.match.status === 'FINISHED';
+        console.log(match.prediction);
 
         return (
           <div key={match.match.id}>
@@ -214,7 +222,7 @@ const ShowProde = () => {
 
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Checkbox
-                disabled={isMatchLocked}
+                disabled={isMatchLocked || match.prediction !== null}
                 checked={
                   selectedWinner[match.match.id] === match.match.homeTeam?.name
                 }
@@ -224,11 +232,16 @@ const ShowProde = () => {
                     match.match.id
                   )
                 }
-                style={{ filter: isMatchLocked ? 'grayscale(100%)' : 'none' }}
+                style={{
+                  filter:
+                    isMatchLocked || match.prediction !== null
+                      ? 'grayscale(100%)'
+                      : 'none',
+                }}
               />
               <label>{match.match.homeTeam?.name}</label>
               <Checkbox
-                disabled={isMatchLocked}
+                disabled={isMatchLocked || match.prediction !== null}
                 checked={
                   selectedWinner[match.match.id] === match.match.awayTeam?.name
                 }
@@ -238,7 +251,12 @@ const ShowProde = () => {
                     match.match.id
                   )
                 }
-                style={{ filter: isMatchLocked ? 'grayscale(100%)' : 'none' }}
+                style={{
+                  filter:
+                    isMatchLocked || match.prediction !== null
+                      ? 'grayscale(100%)'
+                      : 'none',
+                }}
               />
               <label>{match.match.awayTeam?.name}</label>
               <Button
