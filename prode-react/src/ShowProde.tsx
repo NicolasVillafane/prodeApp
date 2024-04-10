@@ -209,105 +209,106 @@ const ShowProde = () => {
     )
   );
 
-  const matches = data.football
-    ? data.football.map((match) => {
-        if (!match) return null;
-        const dateObject = new Date(match.match.utcDate);
-        const day = dateObject.getDate();
-        const formattedDay = day < 10 ? `0${day}` : day;
-        const month = dateObject.getMonth() + 1;
-        const formattedMonth = month < 10 ? `0${month}` : month;
-        const formattedDate = `${formattedDay}/${formattedMonth}`;
-        const matchStartDate = dateObject.getTime();
-        const currentDateTime = new Date().getTime();
-        const isMatchLocked =
-          match.match.status !== 'POSTPONED' &&
-          currentDateTime >= matchStartDate - 30 * 60 * 1000;
-        const formattedHour = (dateObject.getUTCHours() - 3 + 24) % 24;
-        const formattedMinutes = dateObject.getUTCMinutes();
-        const isMatchFinished = match.match.status === 'FINISHED';
+  const matchesByDate: { [date: string]: JSX.Element[] } = {};
 
-        return (
-          <div key={match.match.id}>
-            <Typography variant="h6" style={{ borderBottom: '1px solid #000' }}>
-              {formattedDate} |{' '}
-              {formattedHour < 10 ? `0${formattedHour}` : formattedHour}:
-              {formattedMinutes < 10
-                ? `0${formattedMinutes}`
-                : formattedMinutes}{' '}
-              | {match.match.homeTeam?.name}{' '}
-              {match.match.score?.fullTime.homeTeam} -{' '}
-              {match.match.score?.fullTime.awayTeam}{' '}
-              {match.match.awayTeam?.name} |{' '}
-              {match.match.status !== 'SCHEDULED' ? match.match.status : ''}
-              {(isMatchFinished || isMatchLocked) && (
-                <span style={{ color: 'red', marginLeft: '8px' }}>Closed</span>
-              )}
-            </Typography>
+  if (data.football) {
+    data.football.forEach((match) => {
+      const dateObject = new Date(match.match.utcDate);
+      const formattedDate = dateObject.toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+      });
+      const formattedHour = dateObject.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
 
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <Checkbox
-                disabled={isMatchLocked || match.prediction !== null}
-                checked={
+      const matchDetails = (
+        <div key={match.match.id}>
+          <Typography variant="h6" style={{ borderBottom: '1px solid #000' }}>
+            {formattedHour} | {match.match.homeTeam?.name}{' '}
+            {match.match.score?.fullTime.homeTeam} -{' '}
+            {match.match.score?.fullTime.awayTeam} {match.match.awayTeam?.name}{' '}
+            | {match.match.status !== 'SCHEDULED' ? match.match.status : ''}
+          </Typography>
+
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Checkbox
+              disabled={
+                match.match.status !== 'SCHEDULED' || match.prediction !== null
+              }
+              checked={
+                selectedWinner[match.match.id] === match.match.homeTeam?.name
+              }
+              onChange={() =>
+                handleCheckboxChange(match.match.homeTeam?.name, match.match.id)
+              }
+              style={{
+                filter:
+                  match.match.status !== 'SCHEDULED' ||
+                  match.prediction !== null
+                    ? 'grayscale(100%)'
+                    : 'none',
+              }}
+            />
+            <label>{match.match.homeTeam?.name}</label>
+            <Checkbox
+              disabled={
+                match.match.status !== 'SCHEDULED' || match.prediction !== null
+              }
+              checked={
+                selectedWinner[match.match.id] === match.match.awayTeam?.name
+              }
+              onChange={() =>
+                handleCheckboxChange(match.match.awayTeam?.name, match.match.id)
+              }
+              style={{
+                filter:
+                  match.match.status !== 'SCHEDULED' ||
+                  match.prediction !== null
+                    ? 'grayscale(100%)'
+                    : 'none',
+              }}
+            />
+            <label>{match.match.awayTeam?.name}</label>
+            <Button
+              key={match.match.id}
+              disabled={
+                !selectedWinner[match.match.id] ||
+                match.match.status !== 'SCHEDULED'
+              }
+              onClick={() =>
+                handleSubmitPrediction(
+                  match.match.id,
                   selectedWinner[match.match.id] === match.match.homeTeam?.name
-                }
-                onChange={() =>
-                  handleCheckboxChange(
-                    match.match.homeTeam?.name,
-                    match.match.id
-                  )
-                }
-                style={{
-                  filter:
-                    isMatchLocked || match.prediction !== null
-                      ? 'grayscale(100%)'
-                      : 'none',
-                }}
-              />
-              <label>{match.match.homeTeam?.name}</label>
-              <Checkbox
-                disabled={isMatchLocked || match.prediction !== null}
-                checked={
-                  selectedWinner[match.match.id] === match.match.awayTeam?.name
-                }
-                onChange={() =>
-                  handleCheckboxChange(
-                    match.match.awayTeam?.name,
-                    match.match.id
-                  )
-                }
-                style={{
-                  filter:
-                    isMatchLocked || match.prediction !== null
-                      ? 'grayscale(100%)'
-                      : 'none',
-                }}
-              />
-              <label>{match.match.awayTeam?.name}</label>
-              <Button
-                key={match.match.id}
-                disabled={
-                  !selectedWinner[match.match.id] ||
-                  isMatchLocked ||
-                  isMatchFinished
-                }
-                onClick={() =>
-                  handleSubmitPrediction(
-                    match.match.id,
-                    selectedWinner[match.match.id] ===
-                      match.match.homeTeam?.name
-                      ? 'HOME_TEAM'
-                      : 'AWAY_TEAM'
-                  )
-                }
-              >
-                Submit Prediction
-              </Button>
-            </div>
+                    ? 'HOME_TEAM'
+                    : 'AWAY_TEAM'
+                )
+              }
+            >
+              Submit Prediction
+            </Button>
           </div>
-        );
-      })
-    : [];
+        </div>
+      );
+
+      if (matchesByDate[formattedDate]) {
+        matchesByDate[formattedDate].push(matchDetails);
+      } else {
+        matchesByDate[formattedDate] = [matchDetails];
+      }
+    });
+  }
+
+  const matches = Object.entries(matchesByDate).map(([date, matches]) => (
+    <div key={date}>
+      <Typography variant="h4" style={{ marginTop: '16px' }}>
+        {date}
+      </Typography>
+      {matches}
+    </div>
+  ));
 
   return (
     <div>
