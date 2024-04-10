@@ -201,9 +201,7 @@ const ShowProde = () => {
           <Typography variant="h6">
             {`${index + 1}. ${user.username}`}
             {userPoints[user.id] !== undefined && (
-              <span style={{ marginLeft: '8px' }}>
-                Points: {userPoints[user.id]}
-              </span>
+              <span style={{ marginLeft: '8px' }}>{userPoints[user.id]}</span>
             )}
           </Typography>
         </ListItemText>
