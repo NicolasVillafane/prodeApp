@@ -380,33 +380,33 @@ const ShowProde = () => {
               </Grid>
             </Grid>
           )}
-        </Grid>
-        <Grid container direction="column">
-          <Grid item xs={12}>
-            <Typography variant="h3" style={{ textAlign: 'center' }}>
-              Matchday {data.currentMatchday} Fixtures
-            </Typography>
-            <div>
-              {matches.length > 0 ? (
-                <Container>{matches}</Container>
-              ) : (
-                <Typography variant="h5">No Matches!</Typography>
-              )}
-            </div>
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant="h3" style={{ textAlign: 'center' }}>
-              Leaderboards
-            </Typography>
-            <div>
-              {joinedUsersWithPoints && joinedUsersWithPoints.length > 0 ? (
-                <List component="ol">{joinedUsersWithPoints}</List>
-              ) : (
-                <Typography variant="body1">
-                  No users have joined yet!
-                </Typography>
-              )}
-            </div>
+          <Grid container direction="row" justifyContent="center">
+            <Grid item xs={12} sm={6}>
+              <Typography variant="h3" style={{ textAlign: 'center' }}>
+                Matchday {data.currentMatchday} Fixtures
+              </Typography>
+              <div>
+                {matches.length > 0 ? (
+                  <Container>{matches}</Container>
+                ) : (
+                  <Typography variant="h5">No Matches!</Typography>
+                )}
+              </div>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="h3" style={{ textAlign: 'center' }}>
+                Leaderboards
+              </Typography>
+              <div>
+                {joinedUsersWithPoints && joinedUsersWithPoints.length > 0 ? (
+                  <List component="ol">{joinedUsersWithPoints}</List>
+                ) : (
+                  <Typography variant="body1">
+                    No users have joined yet!
+                  </Typography>
+                )}
+              </div>
+            </Grid>
           </Grid>
         </Grid>
       </Container>
