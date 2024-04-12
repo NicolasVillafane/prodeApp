@@ -9,6 +9,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import Appbar from './Appbar';
 import keycloak from './Keycloak';
@@ -71,6 +73,11 @@ const ShowProde = () => {
   const [selectedWinner, setSelectedWinner] = useState<{
     [key: string]: string | null;
   }>({});
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>(
+    'success'
+  );
 
   useEffect(() => {
     const userId = keycloak.subject || null;
@@ -183,12 +190,31 @@ const ShowProde = () => {
         }),
       });
       if (response.ok) {
-        // Handle successful prediction submission (if needed)
+        setAlertSeverity('success');
+        setAlertMessage('Prediction submitted successfully');
+        setAlertOpen(true);
       } else {
-        console.error('Failed to submit prediction');
+        const errorData = await response.json();
+        setAlertSeverity('error');
+        setAlertMessage('User has already made a prediction for this match');
+        setAlertOpen(true);
       }
     } catch (error) {
       console.error('Error submitting prediction:', error);
+      setAlertSeverity('error');
+      setAlertMessage('Error submitting prediction');
+      setAlertOpen(true);
+    }
+  };
+
+  const handleAlertClose = (event: any, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setAlertOpen(false);
+    if (reason !== 'clickaway') {
+      navigate(`/p/${id}`);
     }
   };
 
@@ -426,6 +452,22 @@ const ShowProde = () => {
           </Grid>
         </Grid>
       </Container>
+      <Snackbar
+        open={alertOpen}
+        autoHideDuration={6000}
+        onClose={handleAlertClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        style={{ marginBottom: '20px' }}
+      >
+        <Alert
+          onClose={handleAlertClose}
+          severity={alertSeverity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
