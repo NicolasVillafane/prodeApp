@@ -21,9 +21,11 @@ interface Match {
     homeTeam: {
       name: string;
     };
+    homeTeamCrest: string;
     awayTeam: {
       name: string;
     };
+    awayTeamCrest: string;
     score: {
       fullTime: {
         homeTeam: number;
@@ -227,9 +229,20 @@ const ShowProde = () => {
       const matchDetails = (
         <div key={match.match.id}>
           <Typography variant="h6" style={{ borderBottom: '1px solid #000' }}>
-            {formattedHour} | {match.match.homeTeam?.name}{' '}
-            {match.match.score?.fullTime.homeTeam} -{' '}
-            {match.match.score?.fullTime.awayTeam} {match.match.awayTeam?.name}{' '}
+            {formattedHour} |{' '}
+            <img
+              src={match.match.homeTeamCrest}
+              alt="Home Team Crest"
+              style={{ width: '20px', marginRight: '5px' }}
+            />{' '}
+            {match.match.homeTeam?.name} {match.match.score?.fullTime.homeTeam}{' '}
+            - {match.match.score?.fullTime.awayTeam}{' '}
+            {match.match.awayTeam?.name}{' '}
+            <img
+              src={match.match.awayTeamCrest}
+              alt="Away Team Crest"
+              style={{ width: '20px', marginLeft: '5px' }}
+            />{' '}
             | {match.match.status !== 'SCHEDULED' ? match.match.status : ''}
           </Typography>
 

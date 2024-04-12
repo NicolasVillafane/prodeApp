@@ -189,6 +189,47 @@ class FootballDataApi {
     return returnedPromise;
   }
 
+  /**
+   * Get information about the matches of a specific competition matchday with team crests
+   * @param {number|string} competitionId The unique string or number identifier for the competition
+   * @param {number} matchdayNumber The matchday number
+   * @return {Promise}
+   */
+  getCompetitionMatchesMatchdayWithCrests(competitionId, matchdayNumber) {
+    const returnedPromise = new Promise(async (resolve, reject) => {
+      try {
+        // Fetch competition teams to get crests
+        const teamsResponse = await this.getCompetitionTeams(competitionId);
+        const teams = teamsResponse.teams;
+
+        // Fetch matches for the given matchday
+        const matchesResponse = await this.getCompetitionMatchesMatchday(
+          competitionId,
+          matchdayNumber
+        );
+        const matches = matchesResponse.matches;
+
+        // Combine match data with team crests
+        const matchesWithCrests = matches.map((match) => {
+          const homeTeam = teams.find((team) => team.id === match.homeTeam.id);
+          const awayTeam = teams.find((team) => team.id === match.awayTeam.id);
+          return {
+            ...match,
+            homeTeamCrest: homeTeam.crestUrl,
+            awayTeamCrest: awayTeam.crestUrl,
+          };
+        });
+
+        resolve({
+          matches: matchesWithCrests,
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+    return returnedPromise;
+  }
+
   getCompetitionScorers(competitionId, filters) {
     const returnedPromise = new Promise((resolve, reject) => {
       this.axiosObj

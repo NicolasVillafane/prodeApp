@@ -100,7 +100,7 @@ app.get('/p/:id', async (req, res) => {
     );
     let currentMatchday = competitionInfo.currentSeason.currentMatchday;
 
-    let footballData = await fd.getCompetitionMatchesMatchday(
+    let footballData = await fd.getCompetitionMatchesMatchdayWithCrests(
       parseInt(prodeData[0].tournamentid),
       currentMatchday
     );
@@ -111,7 +111,7 @@ app.get('/p/:id', async (req, res) => {
     console.log('are matches finished: ' + allMatchesFinished);
     if (allMatchesFinished) {
       currentMatchday++;
-      footballData = await fd.getCompetitionMatchesMatchday(
+      footballData = await fd.getCompetitionMatchesMatchdayWithCrests(
         parseInt(prodeData[0].tournamentid),
         currentMatchday
       );
