@@ -190,15 +190,18 @@ class FootballDataApi {
   }
 
   /**
-   * Get information about the matches of a specific competition matchday with team crests
+   * Get information about the matches of a specific competition matchday with team crests and short names
    * @param {number|string} competitionId The unique string or number identifier for the competition
    * @param {number} matchdayNumber The matchday number
    * @return {Promise}
    */
-  getCompetitionMatchesMatchdayWithCrests(competitionId, matchdayNumber) {
+  getCompetitionMatchesMatchdayWithCrestsAndShortNames(
+    competitionId,
+    matchdayNumber
+  ) {
     const returnedPromise = new Promise(async (resolve, reject) => {
       try {
-        // Fetch competition teams to get crests
+        // Fetch competition teams to get crests and short names
         const teamsResponse = await this.getCompetitionTeams(competitionId);
         const teams = teamsResponse.teams;
 
@@ -209,19 +212,21 @@ class FootballDataApi {
         );
         const matches = matchesResponse.matches;
 
-        // Combine match data with team crests
-        const matchesWithCrests = matches.map((match) => {
+        // Combine match data with team crests and short names
+        const matchesWithCrestsAndShortNames = matches.map((match) => {
           const homeTeam = teams.find((team) => team.id === match.homeTeam.id);
           const awayTeam = teams.find((team) => team.id === match.awayTeam.id);
           return {
             ...match,
             homeTeamCrest: homeTeam.crestUrl,
+            homeTeamShortName: homeTeam.shortName,
             awayTeamCrest: awayTeam.crestUrl,
+            awayTeamShortName: awayTeam.shortName,
           };
         });
 
         resolve({
-          matches: matchesWithCrests,
+          matches: matchesWithCrestsAndShortNames,
         });
       } catch (error) {
         reject(error);

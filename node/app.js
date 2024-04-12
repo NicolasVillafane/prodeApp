@@ -100,10 +100,11 @@ app.get('/p/:id', async (req, res) => {
     );
     let currentMatchday = competitionInfo.currentSeason.currentMatchday;
 
-    let footballData = await fd.getCompetitionMatchesMatchdayWithCrests(
-      parseInt(prodeData[0].tournamentid),
-      currentMatchday
-    );
+    let footballData =
+      await fd.getCompetitionMatchesMatchdayWithCrestsAndShortNames(
+        parseInt(prodeData[0].tournamentid),
+        currentMatchday
+      );
 
     let allMatchesFinished = footballData.matches.every(
       (match) => match.status === 'FINISHED'
@@ -111,10 +112,11 @@ app.get('/p/:id', async (req, res) => {
     console.log('are matches finished: ' + allMatchesFinished);
     if (allMatchesFinished) {
       currentMatchday++;
-      footballData = await fd.getCompetitionMatchesMatchdayWithCrests(
-        parseInt(prodeData[0].tournamentid),
-        currentMatchday
-      );
+      footballData =
+        await fd.getCompetitionMatchesMatchdayWithCrestsAndShortNames(
+          parseInt(prodeData[0].tournamentid),
+          currentMatchday
+        );
     }
 
     // Iterate through matches and compare predictions

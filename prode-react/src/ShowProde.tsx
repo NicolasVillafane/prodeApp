@@ -22,10 +22,12 @@ interface Match {
       name: string;
     };
     homeTeamCrest: string;
+    homeTeamShortName: string;
     awayTeam: {
       name: string;
     };
     awayTeamCrest: string;
+    awayTeamShortName: string;
     score: {
       fullTime: {
         homeTeam: number;
@@ -96,7 +98,7 @@ const ShowProde = () => {
 
     fetchData();
   }, [id, userId]);
-
+  console.log(data);
   const handleInvite = async () => {
     try {
       navigate(`/p/${id}/invite`);
@@ -201,7 +203,7 @@ const ShowProde = () => {
       <ListItem key={index}>
         <ListItemText>
           <Typography variant="h6">
-            {`${index + 1}. ${user.username}`}
+            {`${index + 1}. ${user.username} -`}
             {userPoints[user.id] !== undefined && (
               <span style={{ marginLeft: '8px' }}>{userPoints[user.id]}</span>
             )}
@@ -235,9 +237,10 @@ const ShowProde = () => {
               alt="Home Team Crest"
               style={{ width: '20px', marginRight: '5px' }}
             />{' '}
-            {match.match.homeTeam?.name} {match.match.score?.fullTime.homeTeam}{' '}
-            - {match.match.score?.fullTime.awayTeam}{' '}
-            {match.match.awayTeam?.name}{' '}
+            {match.match.homeTeamShortName}{' '}
+            {match.match.score?.fullTime.homeTeam} -{' '}
+            {match.match.score?.fullTime.awayTeam}{' '}
+            {match.match.awayTeamShortName}{' '}
             <img
               src={match.match.awayTeamCrest}
               alt="Away Team Crest"
