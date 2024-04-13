@@ -105,7 +105,7 @@ const ShowProde = () => {
 
     fetchData();
   }, [id, userId]);
-  console.log(data);
+  console.log(data.football);
   const handleInvite = async () => {
     try {
       navigate(`/p/${id}/invite`);
@@ -299,6 +299,21 @@ const ShowProde = () => {
               disabled={
                 match.match.status !== 'SCHEDULED' || match.prediction !== null
               }
+              checked={selectedWinner[match.match.id] === 'DRAW'}
+              onChange={() => handleCheckboxChange('DRAW', match.match.id)}
+              style={{
+                filter:
+                  match.match.status !== 'SCHEDULED' ||
+                  match.prediction !== null
+                    ? 'grayscale(100%)'
+                    : 'none',
+              }}
+            />
+            <label>Draw</label>
+            <Checkbox
+              disabled={
+                match.match.status !== 'SCHEDULED' || match.prediction !== null
+              }
               checked={
                 selectedWinner[match.match.id] === match.match.awayTeam?.name
               }
@@ -320,14 +335,16 @@ const ShowProde = () => {
                 !selectedWinner[match.match.id] ||
                 match.match.status !== 'SCHEDULED'
               }
-              onClick={() =>
-                handleSubmitPrediction(
-                  match.match.id,
-                  selectedWinner[match.match.id] === match.match.homeTeam?.name
+              onClick={() => {
+                const predictedResult =
+                  selectedWinner[match.match.id] === 'DRAW'
+                    ? 'DRAW'
+                    : selectedWinner[match.match.id] ===
+                      match.match.homeTeam?.name
                     ? 'HOME_TEAM'
-                    : 'AWAY_TEAM'
-                )
-              }
+                    : 'AWAY_TEAM';
+                handleSubmitPrediction(match.match.id, predictedResult);
+              }}
             >
               Submit Prediction
             </Button>

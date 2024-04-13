@@ -140,19 +140,13 @@ app.get('/p/:id', async (req, res) => {
           });
           // Update user's points for the current prode if the prediction is correct
           if (predictionResult === matchWinner) {
-            // console.log(
-            //   `Awarding points to user ${userId} for correct prediction in match ${match.id}`
-            // );
-            await updateUserPointsForProde(userId, id, 3); // Assuming 3 points are awarded for a correct prediction
+            await updateUserPointsForProde(userId, id, 3);
             // Mark the points as awarded for this prediction
             await markPointsAsAwarded(prediction.id);
-            // console.log(`Points awarded for prediction ${prediction.id}`);
           }
         } else {
           // If points have already been awarded for this match, set isPredictionCorrect to null
-          // console.log(
-          //   `Prediction for match ${match.id} already awarded or not found`
-          // );
+
           matchesWithPredictions.push({
             match,
             prediction: predictionResult,
@@ -446,7 +440,6 @@ app.post('/confirm-invitation', async (req, res) => {
       currentUser.username,
       currentUser.email
     );
-    // Assuming you have a function to join the prode using prode_id and current user info
     await joinProde(
       prodeId,
       currentUser.id,
