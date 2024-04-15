@@ -106,7 +106,6 @@ const ShowProde = () => {
     fetchData();
   }, [id, userId]);
 
-  // Load selected predictions from local storage when component mounts
   useEffect(() => {
     const storedPredictions = JSON.parse(
       localStorage.getItem('predictions') || '{}'
@@ -114,7 +113,6 @@ const ShowProde = () => {
     setSelectedWinner(storedPredictions);
   }, []);
 
-  // Save selected predictions to local storage whenever selectedWinner changes
   useEffect(() => {
     localStorage.setItem('predictions', JSON.stringify(selectedWinner));
   }, [selectedWinner]);

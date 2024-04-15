@@ -44,18 +44,15 @@ const predictionPool = new Pool({
 
 export const saveInvitationToken = async (prodeId, token, receiverEmail) => {
   try {
-    // Check if the user with the given email has already joined the prode
     const userAlreadyJoined = await checkIfUserAlreadyJoinedProde(
       prodeId,
       receiverEmail
     );
 
-    // If the user has already joined, throw an error or handle it as desired
     if (userAlreadyJoined) {
       throw new Error('User has already joined the prode');
     }
 
-    // If the user has not joined, proceed to save the invitation token
     await invitationPool.query(
       'INSERT INTO invitations (prode_id, token, receiver_email) VALUES ($1, $2, $3)',
       [prodeId, token, receiverEmail]
@@ -206,10 +203,8 @@ export const getProdes = async () => {
   }
 };
 
-// Function to fetch public prodes
 export const getPublicProdes = async () => {
   try {
-    // Assuming there's a 'prodes' table with a column 'ispublic' indicating whether a prode is public
     const query = 'SELECT * FROM prodes WHERE ispublic = true';
     const { rows } = await prodePool.query(query);
     return rows;
@@ -219,10 +214,8 @@ export const getPublicProdes = async () => {
   }
 };
 
-// Function to fetch private prodes for a given user
 export const getPrivateProdesForUser = async (userId) => {
   try {
-    // Query prodes where author_id matches the given userId or the user is in joined_users_info
     const query =
       'SELECT * FROM prodes WHERE author_id = $1 OR joined_users_info::jsonb @> $2';
     const { rows } = await prodePool.query(query, [
@@ -357,8 +350,6 @@ export const checkIfUserWithEmailExists = async (email) => {
 
 export const getInvitationInfoByToken = (token) => {
   return new Promise((resolve, reject) => {
-    // Convert the token to a string to ensure consistency
-
     invitationPool.query(
       'SELECT prode_id, receiver_email FROM invitations WHERE token = $1',
       [token],
@@ -395,27 +386,6 @@ export const checkIfUserAlreadyJoinedProde = async (prodeId, userEmail) => {
   }
 };
 
-// export const savePredictionToDatabase = async (
-//   id,
-//   user_id,
-//   prode_id,
-//   match_id,
-//   predicted_result
-// ) => {
-//   try {
-//     // Stringify the predicted_result object before saving to the database
-//     const predictedResultString = JSON.stringify(predicted_result);
-
-//     const query =
-//       'INSERT INTO predictions (id, user_id, prode_id, match_id, predicted_result) VALUES ($1, $2, $3, $4, $5)';
-//     const values = [id, user_id, prode_id, match_id, predictedResultString];
-//     await predictionPool.query(query, values);
-//   } catch (error) {
-//     console.error('Error saving prediction to database:', error);
-//     throw error;
-//   }
-// };
-
 export const savePredictionToDatabase = async (
   id,
   user_id,
@@ -424,7 +394,6 @@ export const savePredictionToDatabase = async (
   predicted_result
 ) => {
   try {
-    // Check if the user has already made a prediction for the given match
     const existingPrediction = await getPredictionByUserAndMatch(
       user_id,
       match_id
@@ -433,7 +402,6 @@ export const savePredictionToDatabase = async (
       throw new Error('User has already made a prediction for this match');
     }
 
-    // Stringify the predicted_result object before saving to the database
     const predictedResultString = JSON.stringify(predicted_result);
 
     const query =
@@ -446,13 +414,12 @@ export const savePredictionToDatabase = async (
   }
 };
 
-// Function to get prediction by user and match
 const getPredictionByUserAndMatch = async (user_id, match_id) => {
   try {
     const query =
       'SELECT * FROM predictions WHERE user_id = $1 AND match_id = $2';
     const { rows } = await predictionPool.query(query, [user_id, match_id]);
-    return rows[0]; // Return the first prediction if found, or undefined
+    return rows[0];
   } catch (error) {
     console.error('Error fetching prediction:', error);
     throw error;
@@ -460,21 +427,12 @@ const getPredictionByUserAndMatch = async (user_id, match_id) => {
 };
 
 export const getPredictionForMatch = async (userId, matchId, prodeId) => {
-  // Implement this function to fetch prediction from the database
   try {
-    // console.log(
-    //   'Fetching prediction for userId:',
-    //   userId,
-    //   'matchId:',
-    //   matchId,
-    //   'prodeId:',
-    //   prodeId
-    // );
     const result = await predictionPool.query(
       'SELECT * FROM predictions WHERE user_id = $1 AND match_id = $2 AND prode_id = $3',
       [userId, matchId, prodeId]
     );
-    // console.log('Fetched prediction:', result.rows[0]);
+
     return result.rows[0];
   } catch (error) {
     console.error('Error fetching prediction:', error);
@@ -488,7 +446,6 @@ export const updateUserPointsForProde = async (
   pointsToAdd
 ) => {
   try {
-    // Increment user's points for the current prode by the specified amount
     await predictionPool.query(
       'INSERT INTO prode_points (user_id, prode_id, points) VALUES ($1, $2, $3) ON CONFLICT (user_id, prode_id) DO UPDATE SET points = prode_points.points + $3',
       [userId, prodeId, pointsToAdd]
@@ -501,7 +458,6 @@ export const updateUserPointsForProde = async (
 
 export const markPointsAsAwarded = async (predictionId) => {
   try {
-    // Perform an SQL UPDATE statement to mark points as awarded for the specified prediction
     await predictionPool.query(
       'UPDATE predictions SET points_awarded = TRUE WHERE id = $1',
       [predictionId]
@@ -518,7 +474,7 @@ export const getPointsForProde = async (prodeId) => {
       'SELECT * FROM prode_points WHERE prode_id = $1',
       [prodeId]
     );
-    return result.rows; // Return the rows directly
+    return result.rows;
   } catch (error) {
     console.error('Error fetching points for prode:', error);
     throw error;

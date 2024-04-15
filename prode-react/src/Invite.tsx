@@ -38,7 +38,7 @@ const Invite = () => {
     }
 
     setAlertOpen(false);
-    // Navigate only if the reason for closing is not 'clickaway'
+
     if (reason !== 'clickaway') {
       navigate(`/p/${id}`);
     }
@@ -65,7 +65,6 @@ const Invite = () => {
         setAlertSeverity('success');
         setAlertMessage('Invitation sent successfully');
         setAlertOpen(true);
-        // Do not navigate until the alert is dismissed
       } else {
         const errorData = await response.json();
         setAlertSeverity('error');
@@ -116,7 +115,7 @@ const Invite = () => {
                     }
                     helperText={
                       formik.touched.receiverEmail &&
-                      formik.errors.receiverEmail
+                      (formik.errors.receiverEmail as string)
                     }
                   />
                 </Grid>

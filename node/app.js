@@ -58,27 +58,22 @@ app.get('/home', async (req, res) => {
     let allProdes = [];
 
     if (authHeader) {
-      const token = authHeader.split(' ')[1]; // Extracting the token from the header
+      const token = authHeader.split(' ')[1];
       const decodedToken = jwt.decode(token);
       const userId = decodedToken?.sub;
 
-      // Fetch private prodes for the user
       const privateProdes = await getPrivateProdesForUser(userId);
       allProdes.push(...privateProdes);
     }
 
-    // Fetch public prodes
     const publicProdes = await getPublicProdes();
 
-    // Combine public and private prodes
     allProdes.push(...publicProdes);
 
-    // Remove duplicates
     const uniqueProdes = Array.from(
       new Set(allProdes.map((prode) => prode.id))
     ).map((id) => allProdes.find((prode) => prode.id === id));
 
-    // Send the list of prodes as the response
     res.status(200).json(uniqueProdes);
   } catch (error) {
     console.error('Error fetching prodes:', error);
@@ -93,7 +88,6 @@ app.get('/p/:id', async (req, res) => {
     let prodeData = await getProde(id);
     const isAuthor = prodeData[0].author_id === userId;
 
-    // Fetch football match data
     const fd = new FootballDataApi(footballDataApiKey);
     const competitionInfo = await fd.getCompetition(
       parseInt(prodeData[0].tournamentid)
@@ -119,34 +113,28 @@ app.get('/p/:id', async (req, res) => {
         );
     }
 
-    // Iterate through matches and compare predictions
     const matchesWithPredictions = [];
     for (const match of footballData.matches) {
       const matchWinner = match.score.winner;
       let isPredictionCorrect = null;
 
-      // Get prediction for the current match
       const prediction = await getPredictionForMatch(userId, match.id, id);
       const predictionResult = prediction ? prediction.predicted_result : null;
 
-      // Only award points if the prediction is correct and points have not been awarded yet
       if (match.status === 'FINISHED') {
         if (prediction && !prediction.points_awarded) {
-          // Push the user's prediction directly
           matchesWithPredictions.push({
             match,
             prediction: predictionResult,
             isPredictionCorrect: predictionResult === matchWinner,
           });
-          // Update user's points for the current prode if the prediction is correct
+
           if (predictionResult === matchWinner) {
             await updateUserPointsForProde(userId, id, 3);
-            // Mark the points as awarded for this prediction
+
             await markPointsAsAwarded(prediction.id);
           }
         } else {
-          // If points have already been awarded for this match, set isPredictionCorrect to null
-
           matchesWithPredictions.push({
             match,
             prediction: predictionResult,
@@ -154,11 +142,10 @@ app.get('/p/:id', async (req, res) => {
           });
         }
       } else {
-        // If match is not finished, still push prediction and correctness
         matchesWithPredictions.push({
           match,
           prediction: predictionResult,
-          isPredictionCorrect: null, // Prediction correctness is null when match is not finished
+          isPredictionCorrect: null,
         });
       }
     }
@@ -257,7 +244,6 @@ app.post('/p/:id', async (req, res) => {
   try {
     const { match_id, predicted_result, user_id, prode_id } = req.body;
 
-    // Validate if the required fields are present
     if (!match_id || !predicted_result || !user_id || !prode_id) {
       return res.status(400).json({
         error: 'Match ID, predicted result, user ID, and prode ID are required',
@@ -266,7 +252,6 @@ app.post('/p/:id', async (req, res) => {
 
     const id = uuid();
 
-    // Save the prediction to the database
     await savePredictionToDatabase(
       id,
       user_id,
@@ -275,7 +260,6 @@ app.post('/p/:id', async (req, res) => {
       predicted_result
     );
 
-    // Send a success response
     res.status(200).json({ message: 'Prediction submitted successfully' });
   } catch (error) {
     console.error('Error submitting prediction:', error);
@@ -349,7 +333,6 @@ app.post('/create-prode', async (req, res) => {
     console.log('Author ID:', authorId);
     console.log('Author Name:', authorName);
 
-    // Join the author to the Prode
     await joinProde(id, authorId, authorName, authorEmail);
 
     res.status(200).json(prode);
@@ -363,7 +346,6 @@ app.post('/send-invitation', async (req, res) => {
   try {
     const { prodeId, receiverEmail } = req.body;
 
-    // Check if the email exists in the users table
     const userExists = await checkIfUserWithEmailExists(receiverEmail);
     if (!userExists) {
       return res
@@ -371,7 +353,6 @@ app.post('/send-invitation', async (req, res) => {
         .json({ error: 'User with this email does not exist' });
     }
 
-    // Check if the user has already joined the prode
     const userAlreadyJoined = await checkIfUserAlreadyJoinedProde(
       prodeId,
       receiverEmail
@@ -411,19 +392,16 @@ app.post('/confirm-invitation', async (req, res) => {
       return res.status(401).json({ error: 'Authorization token missing' });
     }
 
-    const authToken = authHeader.split(' ')[1]; // Extracting the token from the header
+    const authToken = authHeader.split(' ')[1];
     const decodedToken = jwt.decode(authToken);
     const userId = decodedToken?.sub;
 
-    // Fetch user data using the userId
-    const currentUser = await getUserById(userId); // Implement this function
+    const currentUser = await getUserById(userId);
 
-    const { token: invitationToken } = req.body; // Renamed token variable to invitationToken
+    const { token: invitationToken } = req.body;
 
-    console.log('Received token:', invitationToken); // Log the token received from the client
-    // Log the token received from the client
+    console.log('Received token:', invitationToken);
 
-    // Get prode_id and receiver_email using the token from the database
     const { prodeId, receiver_email } = await getInvitationInfoByToken(
       invitationToken
     );
@@ -457,7 +435,7 @@ app.post('/confirm-invitation', async (req, res) => {
 app.post('/p/:id/join', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, username, email } = req.body; // Add email to the request body
+    const { userId, username, email } = req.body;
 
     const prodeData = await getProde(id);
     if (!prodeData || prodeData.length === 0) {
@@ -470,7 +448,7 @@ app.post('/p/:id/join', async (req, res) => {
       return res.status(403).json({ error: 'Prode is not public' });
     }
 
-    await joinProde(id, userId, username, email); // Pass email to the joinProde function
+    await joinProde(id, userId, username, email);
 
     res.status(200).json({ message: 'User joined the prode successfully' });
   } catch (error) {
