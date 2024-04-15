@@ -105,6 +105,20 @@ const ShowProde = () => {
 
     fetchData();
   }, [id, userId]);
+
+  // Load selected predictions from local storage when component mounts
+  useEffect(() => {
+    const storedPredictions = JSON.parse(
+      localStorage.getItem('predictions') || '{}'
+    );
+    setSelectedWinner(storedPredictions);
+  }, []);
+
+  // Save selected predictions to local storage whenever selectedWinner changes
+  useEffect(() => {
+    localStorage.setItem('predictions', JSON.stringify(selectedWinner));
+  }, [selectedWinner]);
+
   console.log(data.football);
   const handleInvite = async () => {
     try {
