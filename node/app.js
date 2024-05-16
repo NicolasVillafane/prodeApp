@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import FootballDataApi from './FootballDataApi.cjs';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
+import redis from 'redis';
 import {
   getTournaments,
   createTournament,
@@ -33,6 +34,19 @@ import { uuid } from 'uuidv4';
 import dotenv from 'dotenv';
 dotenv.config();
 
+const redisClient = redis.createClient({
+  legacyMode: true,
+
+  host: 'localhost',
+  port: 6379,
+});
+
+redisClient.on('error', (err) => {
+  console.error('Redis connection error:', err);
+});
+
+redisClient.connect();
+
 const app = express();
 const port = 3001;
 const footballDataApiKey = process.env.APIKEY;
@@ -43,6 +57,21 @@ app.use(keycloak.middleware());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+const checkCache = (req, res, next) => {
+  const { id } = req.params;
+  redisClient.get(id, (err, data) => {
+    if (err) {
+      console.error('Redis Error:', err);
+      res.status(500).send('Internal Server Error');
+    }
+    if (data !== null) {
+      res.send(JSON.parse(data));
+    } else {
+      next();
+    }
+  });
+};
 
 const transporter = nodemailer.createTransport({
   service: 'hotmail',
@@ -81,7 +110,7 @@ app.get('/home', async (req, res) => {
   }
 });
 
-app.get('/p/:id', async (req, res) => {
+app.get('/p/:id', checkCache, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.query.userId;
@@ -159,6 +188,8 @@ app.get('/p/:id', async (req, res) => {
       isAuthor,
       prodePoints: prodePoints,
     };
+
+    redisClient.setex(id, 600, JSON.stringify(responseData));
 
     res.status(200).json(responseData);
   } catch (error) {

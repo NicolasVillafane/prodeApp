@@ -268,7 +268,6 @@ export const deleteProde = (id) => {
 };
 
 export const saveUserToDatabase = (userId, username, email) => {
-  console.log('hello');
   userPool.query(
     'INSERT INTO users (id, username, email) VALUES ($1, $2, $3)',
     [userId, username, email],

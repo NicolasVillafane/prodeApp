@@ -18,9 +18,11 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "keycloak-connect": "^23.0.4",
+    "node-cache": "^5.1.2",
     "nodemailer": "^6.9.13",
     "pg": "^8.11.3",
     "querystring": "^0.2.1",
+    "redis": "^4.6.13",
     "uuidv4": "^6.2.13"
   }
 }

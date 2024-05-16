@@ -12,5 +12,10 @@ services:
       - keycloak_data:/opt/jboss/keycloak/standalone/data
     command: ['start-dev']
 
+  redis:
+    image: redis:latest
+    ports:
+      - '6379:6379'
+
 volumes:
   keycloak_data:
