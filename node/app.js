@@ -112,6 +112,7 @@ app.get('/home', async (req, res) => {
 
 app.get('/p/:id', checkCache, async (req, res) => {
   try {
+    console.log('hi');
     const { id } = req.params;
     const userId = req.query.userId;
     let prodeData = await getProde(id);
@@ -121,6 +122,10 @@ app.get('/p/:id', checkCache, async (req, res) => {
     const competitionInfo = await fd.getCompetition(
       parseInt(prodeData[0].tournamentid)
     );
+
+    const endDate = new Date(competitionInfo.currentSeason.endDate);
+    const today = new Date();
+
     let currentMatchday = competitionInfo.currentSeason.currentMatchday;
 
     let footballData =
@@ -181,12 +186,20 @@ app.get('/p/:id', checkCache, async (req, res) => {
 
     const prodePoints = await getPointsForProde(id);
 
+    let seasonEnded = false;
+
+    if (allMatchesFinished || today > endDate) {
+      // Season has ended
+      seasonEnded = true;
+    }
+
     const responseData = {
       prode: prodeData,
       football: matchesWithPredictions,
       currentMatchday,
       isAuthor,
       prodePoints: prodePoints,
+      seasonEnded: seasonEnded,
     };
 
     redisClient.setex(id, 600, JSON.stringify(responseData));

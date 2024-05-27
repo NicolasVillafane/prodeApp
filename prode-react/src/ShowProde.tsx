@@ -62,6 +62,7 @@ interface Data {
   football?: Match[];
   currentMatchday?: number;
   prodePoints?: ProdePoints[];
+  seasonEnded?: boolean;
 }
 
 const ShowProde = () => {
@@ -117,7 +118,7 @@ const ShowProde = () => {
     localStorage.setItem('predictions', JSON.stringify(selectedWinner));
   }, [selectedWinner]);
 
-  console.log(data.football);
+  console.log(data.seasonEnded);
   const handleInvite = async () => {
     try {
       navigate(`/p/${id}/invite`);
