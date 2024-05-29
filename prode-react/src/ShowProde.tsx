@@ -65,6 +65,23 @@ interface Data {
   seasonEnded?: boolean;
 }
 
+const Leaderboard = ({
+  joinedUsersWithPoints,
+}: {
+  joinedUsersWithPoints: JSX.Element[];
+}) => (
+  <div>
+    <Typography variant="h3" style={{ textAlign: 'center' }}>
+      Leaderboards
+    </Typography>
+    {joinedUsersWithPoints && joinedUsersWithPoints.length > 0 ? (
+      <List component="ol">{joinedUsersWithPoints}</List>
+    ) : (
+      <Typography variant="body1">No users have joined yet!</Typography>
+    )}
+  </div>
+);
+
 const ShowProde = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -118,7 +135,6 @@ const ShowProde = () => {
     localStorage.setItem('predictions', JSON.stringify(selectedWinner));
   }, [selectedWinner]);
 
-  console.log(data.seasonEnded);
   const handleInvite = async () => {
     try {
       navigate(`/p/${id}/invite`);
@@ -183,12 +199,6 @@ const ShowProde = () => {
     matchId: string,
     predictedResult: string
   ) => {
-    console.log('Submitting prediction...');
-    console.log('User ID:', userId);
-    console.log('Prode ID:', id);
-    console.log('Match ID:', matchId);
-    console.log('Predicted Result:', predictedResult);
-
     try {
       const response = await fetch(`/p/${id}`, {
         method: 'POST',
@@ -285,10 +295,9 @@ const ShowProde = () => {
               alt="Away Team Crest"
               style={{ width: '20px', marginLeft: '5px' }}
             />{' '}
-            | {match.match.status !== 'SCHEDULED' ? match.match.status : ''}
+            | {match.match.status !== 'SCHEDULED' ? match.match.status : null}
           </Typography>
-
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div>
             <Checkbox
               disabled={
                 match.match.status !== 'SCHEDULED' || match.prediction !== null
@@ -382,6 +391,50 @@ const ShowProde = () => {
     </div>
   ));
 
+  const getWinner = () => {
+    if (!data.prodePoints || data.prodePoints.length === 0) return null;
+
+    let maxPoints = -1;
+    let winner = null;
+
+    data.prodePoints.forEach((point) => {
+      if (point.points > maxPoints) {
+        maxPoints = point.points;
+        winner = data.prode[0]?.joined_users_info.find(
+          (user) => user.id === point.user_id
+        );
+      }
+    });
+
+    return winner;
+  };
+
+  const winner = getWinner();
+
+  if (data.seasonEnded) {
+    return (
+      <div>
+        <Appbar />
+        <Container>
+          <Grid
+            container
+            spacing={0}
+            direction="column"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Grid item xs={3}>
+              <Typography variant="h2" color="#9A2A2A">
+                Congratulations, {winner?.username} won!
+              </Typography>
+            </Grid>
+          </Grid>
+          <Leaderboard joinedUsersWithPoints={joinedUsersWithPoints} />
+        </Container>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Appbar />
@@ -466,18 +519,7 @@ const ShowProde = () => {
               </div>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Typography variant="h3" style={{ textAlign: 'center' }}>
-                Leaderboards
-              </Typography>
-              <div>
-                {joinedUsersWithPoints && joinedUsersWithPoints.length > 0 ? (
-                  <List component="ol">{joinedUsersWithPoints}</List>
-                ) : (
-                  <Typography variant="body1">
-                    No users have joined yet!
-                  </Typography>
-                )}
-              </div>
+              <Leaderboard joinedUsersWithPoints={joinedUsersWithPoints} />
             </Grid>
           </Grid>
         </Grid>
